@@ -1,0 +1,84 @@
+# electron-builder config (the Rowlit layout).
+#   Windows: NSIS x64 installer -> desktop/dist/Emdi-Setup-<version>.exe (scripts/build.ps1)
+# Input produced by the build script: ../ui/dist (the renderer).
+appId: dev.emdi.app
+productName: Emdi
+copyright: Copyright (c) 2026 Emdi contributors
+
+directories:
+  output: dist
+  buildResources: build
+
+# Only the bundled main/preload go into app.asar; there are no runtime node_modules.
+files:
+  - package.json
+  - out/main.js
+  - out/preload.js
+  - "!**/*.map"
+npmRebuild: false
+asar: true
+
+# Auto-update (src/updater.ts, electron-updater): the build keeps `--publish never`; this config writes
+# resources/app-update.yml into the app and latest.yml + .blockmap next to the installer, which are uploaded to the
+# v<version> release. File names in latest.yml are the artifactName below, i.e. exactly the uploaded asset names.
+publish:
+  provider: github
+  owner: amirerajabi
+  repo: emdi
+  releaseType: release
+
+extraResources:
+  - from: ../ui/dist
+    to: ui
+  - from: build/icon.png
+    to: icon.png
+
+# Double-clicking a Markdown file opens it in Emdi (main.ts reads the path from argv / open-file).
+fileAssociations:
+  - ext: [md, markdown, mdown, mkd, mdx]
+    name: Markdown document
+    description: Markdown document
+    role: Viewer
+    icon: build/icon.ico
+
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  artifactName: Emdi-Setup-${version}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Emdi
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  uninstallDisplayName: Emdi ${version}
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+
+mac:
+  target: [dmg, zip]
+  icon: build/icon.icns
+  category: public.app-category.productivity
+  artifactName: Emdi-${version}-mac-${arch}.${ext}
+  darkModeSupport: true
+
+linux:
+  target: [AppImage]
+  icon: build/icon.png
+  category: Office
+  artifactName: Emdi-${version}-linux-${arch}.${ext}

@@ -1,0 +1,51 @@
+/* highlight.js tokens in the colours of the code theme (Settings › Appearance › Code theme): the same --syn-* tokens the
+   theme pickers preview, so every code theme applies to code blocks. */
+.hljs { color: var(--ed-fg); background: transparent; }
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-doctag,
+.hljs-meta .hljs-keyword { color: var(--syn-keyword); }
+
+.hljs-built_in,
+.hljs-type,
+.hljs-title.class_,
+.hljs-title.class_.inherited__ { color: var(--syn-class); }
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-section { color: var(--syn-method); }
+
+.hljs-string,
+.hljs-regexp,
+.hljs-template-tag,
+.hljs-symbol,
+.hljs-selector-attr,
+.hljs-addition { color: var(--syn-string); }
+
+.hljs-number,
+.hljs-bullet,
+.hljs-link { color: var(--syn-number); }
+
+.hljs-comment,
+.hljs-quote { color: var(--syn-comment); font-style: italic; }
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-class,
+.hljs-selector-id { color: var(--syn-property); }
+
+.hljs-params { color: var(--syn-parameter); }
+.hljs-name,
+.hljs-tag { color: var(--syn-keyword); }
+.hljs-meta,
+.hljs-meta .hljs-string { color: var(--syn-preprocessor); }
+.hljs-subst { color: var(--ed-fg); }
+.hljs-char.escape_ { color: var(--syn-escape); }
+.hljs-deletion { color: var(--danger-text); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }

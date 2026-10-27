@@ -1,0 +1,50 @@
+name: CI
+
+# Type-check and build the UI and the desktop shell on every push to main and every pull request (Windows and Linux
+# runners). Releases are in release.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Build and check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            ui/package-lock.json
+            desktop/package-lock.json
+
+      - name: Versions agree
+        shell: bash
+        run: node .github/scripts/check-versions.mjs
+
+      # ---- ui
+      - name: UI install
+        run: npm ci --prefix ui
+      - name: UI type-check and build
+        run: npm --prefix ui run build
+
+      # ---- desktop
+      - name: Desktop install
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+        run: npm ci --prefix desktop
+      - name: Desktop type-check and bundle
+        run: npm --prefix desktop run build

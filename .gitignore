@@ -1,0 +1,10 @@
+bin/
+obj/
+node_modules/
+dist/
+out/
+*.user
+.vs/
+.idea/
+.DS_Store
+*.tsbuildinfo
