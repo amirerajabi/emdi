@@ -2410,3 +2410,10 @@ button.sb-item:hover {
 .search-hit mark { background: var(--mark-bg); color: var(--fg); border-radius: 2px; }
 
 .app.focus-mode .reader-layout { padding-top: 64px; }
+
+/* labels in their own direction (a Persian heading or file name) keep the alignment of their list */
+.tree-label[dir],
+.palette-label[dir] {
+  text-align: match-parent;
+  unicode-bidi: isolate;
+}

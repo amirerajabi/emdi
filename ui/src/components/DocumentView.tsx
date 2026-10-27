@@ -5,7 +5,7 @@ import { FileWarning, LoaderCircle } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { copyText } from '../app/actions';
 import { renderMermaid, resetMermaid } from '../markdown/mermaid';
-import { renderMarkdown, type Heading } from '../markdown/render';
+import { renderMarkdown, textDir, type Heading } from '../markdown/render';
 import { dirname, extname, fileUrl, resolvePath } from '../lib/paths';
 import { platform } from '../platform';
 import { useDocuments, type Doc } from '../store/documents';
@@ -143,8 +143,8 @@ export function DocumentView({ doc }: { doc: Doc }) {
             <LoaderCircle className="spin" size={22} />
           </div>
         ) : (
-          <div className="reader-layout">
-            <article ref={bodyRef} className={`markdown-body${s.numberHeadings ? ' numbered' : ''}`} onClick={onClick} onAuxClick={onClick}>
+          <div className="reader-layout" dir={rendered.dir}>
+            <article ref={bodyRef} className={`markdown-body${s.numberHeadings ? ' numbered' : ''}`} dir={rendered.dir} onClick={onClick} onAuxClick={onClick}>
               {s.showFrontMatter && rendered.frontMatter && rendered.frontMatter.length > 0 && <FrontMatter rows={rendered.frontMatter} />}
               <div dangerouslySetInnerHTML={{ __html: rendered.html }} />
               {!doc.text.trim() && <p className="md-empty">This document is empty.</p>}
@@ -163,8 +163,8 @@ function FrontMatter({ rows }: { rows: [string, string][] }) {
       <tbody>
         {rows.map(([k, v]) => (
           <tr key={k}>
-            <th>{k}</th>
-            <td dir="auto">{v}</td>
+            <th dir="ltr">{k}</th>
+            <td dir={textDir(v)}>{v}</td>
           </tr>
         ))}
       </tbody>
@@ -185,7 +185,6 @@ function PageToc({ headings }: { headings: Heading[] }) {
           <a
             key={h.id}
             href={`#${h.id}`}
-            dir="auto"
             className={`page-toc-item${h.id === active ? ' active' : ''}`}
             style={{ paddingInlineStart: 10 + (h.level - top) * 12 }}
             onClick={(e) => {
@@ -193,7 +192,7 @@ function PageToc({ headings }: { headings: Heading[] }) {
               scrollToHeading(h.id);
             }}
           >
-            {h.text}
+            <span dir={textDir(h.text)}>{h.text}</span>
           </a>
         ))}
     </nav>

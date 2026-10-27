@@ -118,9 +118,10 @@
 .markdown-body.numbered { counter-reset: h2; }
 .markdown-body.numbered h2 { counter-reset: h3; }
 .markdown-body.numbered h3 { counter-reset: h4; }
-.markdown-body.numbered h2::before { counter-increment: h2; content: counter(h2) '. '; color: var(--md-muted); font-weight: 500; }
-.markdown-body.numbered h3::before { counter-increment: h3; content: counter(h2) '.' counter(h3) ' '; color: var(--md-muted); font-weight: 500; }
-.markdown-body.numbered h4::before { counter-increment: h4; content: counter(h2) '.' counter(h3) '.' counter(h4) ' '; color: var(--md-muted); font-weight: 500; }
+.markdown-body.numbered h2::before { counter-increment: h2; content: counter(h2) '.'; color: var(--md-muted); font-weight: 500; }
+.markdown-body.numbered h3::before { counter-increment: h3; content: counter(h2) '.' counter(h3); color: var(--md-muted); font-weight: 500; }
+.markdown-body.numbered :is(h2, h3, h4)::before { direction: ltr; unicode-bidi: isolate; display: inline-block; margin-inline-end: 0.35em; }
+.markdown-body.numbered h4::before { counter-increment: h4; content: counter(h2) '.' counter(h3) '.' counter(h4); color: var(--md-muted); font-weight: 500; }
 
 .markdown-body a {
   color: var(--md-accent);
@@ -166,6 +167,8 @@
 
 .markdown-body kbd {
   display: inline-block;
+  direction: ltr;
+  unicode-bidi: isolate;
   padding: 0.1em 0.45em;
   font: 0.82em var(--font-code);
   line-height: 1.4;
@@ -189,14 +192,16 @@
 .markdown-body ul li::marker { color: var(--md-muted); }
 .markdown-body ol li::marker { color: var(--md-muted); font-variant-numeric: tabular-nums; }
 
-.markdown-body .contains-task-list { padding-inline-start: 0.4em; list-style: none; }
+/* only the task items lose their bullet (as on GitHub); the checkbox sits where the bullet was */
 .markdown-body .task-list-item { list-style: none; }
+.markdown-body .task-list-item .task-list-item-checkbox { margin-inline-start: -1.4em; }
 .markdown-body .task-list-item label { display: inline; }
 .markdown-body .task-list-item-checkbox {
   appearance: none;
   width: 1em;
   height: 1em;
-  margin: 0 0.5em 0.15em 0;
+  margin: 0 0 0.15em;
+  margin-inline-end: 0.5em;
   vertical-align: middle;
   border: 1.5px solid var(--border-strong);
   border-radius: 4px;
@@ -236,7 +241,8 @@
   --alert: var(--info);
   padding: 0.75em 1.1em;
   border-inline-start: 3px solid var(--alert);
-  border-radius: 0 8px 8px 0;
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
   background: color-mix(in srgb, var(--alert) 8%, transparent);
 }
 .markdown-body .markdown-alert > :last-child { margin-bottom: 0; }
@@ -265,6 +271,8 @@
 }
 
 .markdown-body :not(pre) > code {
+  /* code keeps its own direction inside right-to-left text: `a.b()` stays `a.b()` */
+  unicode-bidi: plaintext;
   padding: 0.14em 0.38em;
   border-radius: 5px;
   background: var(--md-soft);
@@ -392,7 +400,7 @@
 .markdown-body .footnote-backref { text-decoration: none; }
 .markdown-body sup.footnote-ref { font-size: 0.75em; }
 
-.markdown-body .katex { font-size: 1.08em; }
+.markdown-body .katex { font-size: 1.08em; direction: ltr; unicode-bidi: isolate; }
 .markdown-body .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.3em 0; }
 
 .markdown-body .md-mermaid {
@@ -434,7 +442,8 @@
 }
 
 .page-toc-title {
-  padding: 0 0 8px 10px;
+  padding-block-end: 8px;
+  padding-inline-start: 10px;
   font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
@@ -491,3 +500,26 @@
   .markdown-body h1, .markdown-body h2, .markdown-body h3 { break-after: avoid; }
   .markdown-body .md-code, .markdown-body table, .markdown-body img { break-inside: avoid; }
 }
+
+/* ------------------------------------------------------------------ right-to-left
+
+   Every block carries its own dir (render.ts), the page the document's. Arabic-script text joins its letters, so it gets
+   no letter spacing and no fake italics or caps; lists, quotes, alerts, tables and the outline use logical sides. */
+
+.markdown-body [dir='rtl'],
+.markdown-body[dir='rtl'] :is(h1, h2, h3, h4, h5, h6) {
+  letter-spacing: normal;
+}
+
+.markdown-body h6[dir='rtl'] { text-transform: none; }
+
+.markdown-body [dir='rtl'] em,
+.markdown-body em[dir='rtl'] {
+  font-style: normal;
+  font-weight: 550;
+}
+
+.markdown-body [dir='rtl'] { line-height: calc(var(--reader-line, 1.7) + 0.1); }
+
+/* the "On this page" list sits at the end of the line: the left of a right-to-left page */
+.page-toc-item > span { unicode-bidi: isolate; }

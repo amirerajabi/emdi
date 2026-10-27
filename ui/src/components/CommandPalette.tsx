@@ -8,6 +8,7 @@ import { useUi, type PaletteMode } from '../store/ui';
 import { useWorkspace } from '../store/workspace';
 import { FileIcon } from './common/icons';
 import { scrollToHeading } from './DocumentView';
+import { textDir } from '../markdown/render';
 import { useHeadings } from './Outline';
 
 interface Item {
@@ -161,7 +162,7 @@ export function CommandPalette() {
           {items.map((it, i) => (
             <div key={it.key} role="option" aria-selected={i === sel} className={`palette-item${i === sel ? ' selected' : ''}`} onMouseMove={() => setSel(i)} onClick={() => choose(i)}>
               <span className="palette-icon">{it.icon}</span>
-              <span className="palette-label" dir="auto">
+              <span className="palette-label" dir={textDir(it.label)}>
                 <Highlight text={it.label} hits={it.hits} />
               </span>
               <span className="palette-detail">{it.detail}</span>

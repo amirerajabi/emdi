@@ -1,6 +1,7 @@
 // Markdown → HTML: markdown-it with GitHub's extensions (tables, task lists, footnotes, alerts, emoji), math (KaTeX),
 // highlighted code blocks and mermaid placeholders. Headings get unique ids (GitHub's slugs) and every block carries its
-// source line (data-line) and dir="auto", so right-to-left text reads right-to-left. The HTML is sanitised.
+// source line (data-line) and its direction, from the script most of its letters are in, so Persian, Arabic and Hebrew
+// read right-to-left, lists and tables included. The HTML is sanitised.
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
 import MarkdownIt, { type MarkdownIt as Md, type Token } from 'markdown-it';
@@ -28,6 +29,8 @@ export interface Rendered {
   html: string;
   headings: Heading[];
   frontMatter: [string, string][] | null;
+  /** The document's main direction (the page layout follows it; each block also has its own). */
+  dir: 'rtl' | 'ltr';
 }
 
 export interface DocStats {
@@ -51,8 +54,6 @@ export function slugify(text: string): string {
     .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, '')
     .replace(/\s/g, '-');
 }
-
-const BLOCKS_WITH_DIR = new Set(['paragraph_open', 'heading_open', 'blockquote_open', 'list_item_open', 'th_open', 'td_open', 'dt_open', 'dd_open']);
 
 let cached: { key: string; md: Md; fm: { value: string | null } } | null = null;
 
@@ -94,15 +95,40 @@ function instance(o: RenderOptions) {
   md.renderer.rules.table_open = (tokens, idx, opts, _env, self) => `<div class="md-table-wrap">${self.renderToken(tokens, idx, opts)}`;
   md.renderer.rules.table_close = (tokens, idx, opts, _env, self) => `${self.renderToken(tokens, idx, opts)}</div>`;
 
-  // heading ids, source lines and dir="auto"
+  // alerts are rendered by the plugin from meta only: carry their direction into the <div>
+  const alertOpen = md.renderer.rules.alert_open;
+  if (alertOpen) {
+    md.renderer.rules.alert_open = (tokens, idx, opts, env, self) => {
+      const dir = tokens[idx].attrGet('dir');
+      const html = alertOpen(tokens, idx, opts, env, self);
+      return dir ? html.replace(/^<div /, `<div dir="${dir}" `) : html;
+    };
+  }
+
+  // heading ids, source lines and every block's direction
   md.core.ruler.push('emdi_blocks', (state) => {
     const used = new Map<string, number>();
     const headings: Heading[] = [];
     const tokens = state.tokens;
+    // the open blocks around the current token, each counting the letters of its text by direction
+    const open: { token: Token; counts: Counts }[] = [];
+    // the page's direction follows how the document opens: its title and first lines (DOC_DIR_LETTERS)
+    const doc: Counts = { rtl: 0, ltr: 0 };
     for (let i = 0; i < tokens.length; i++) {
       const t = tokens[i];
       if (t.map && t.nesting === 1 && t.block) t.attrSet('data-line', String(t.map[0]));
-      if (BLOCKS_WITH_DIR.has(t.type)) t.attrSet('dir', 'auto');
+      if (t.block && t.nesting === 1) open.push({ token: t, counts: { rtl: 0, ltr: 0 } });
+      else if (t.block && t.nesting === -1) {
+        const b = open.pop();
+        const dir = b && DIR_BLOCKS.has(b.token.type) ? dirOf(b.counts) : undefined;
+        if (b && dir) b.token.attrSet('dir', dir);
+      } else if (t.type === 'inline') {
+        const text = inlineText(t, false);
+        const c = countLetters(text);
+        for (const b of open) addCounts(b.counts, c);
+        const left = DOC_DIR_LETTERS - doc.rtl - doc.ltr;
+        if (left > 0) addCounts(doc, countLetters(text, left));
+      }
       if (t.type === 'heading_open') {
         const inline = tokens[i + 1];
         const text = inlineText(inline);
@@ -115,14 +141,67 @@ function instance(o: RenderOptions) {
       }
     }
     state.env.headings = headings;
+    state.env.dir = dirOf(doc) ?? 'ltr';
   });
   cached = { key, md, fm };
   return cached;
 }
 
-function inlineText(t: Token | undefined): string {
+/** The visible text of an inline token; without code when it only decides the direction (code is always LTR). */
+function inlineText(t: Token | undefined, withCode = true): string {
   if (!t?.children) return t?.content ?? '';
-  return t.children.map((c) => (c.type === 'text' || c.type === 'code_inline' || c.type === 'emoji' ? c.content : c.children ? inlineText(c) : '')).join('');
+  return t.children.map((c) => (c.type === 'text' || c.type === 'emoji' || (withCode && c.type === 'code_inline') ? c.content : c.children ? inlineText(c, withCode) : '')).join('');
+}
+
+// ------------------------------------------------------------------ direction
+
+interface Counts {
+  rtl: number;
+  ltr: number;
+}
+
+/** Letters of the right-to-left scripts (Hebrew, Arabic and Persian, Syriac, Thaana, N'Ko…). */
+const RTL_LETTER = /[\p{Script=Hebrew}\p{Script=Arabic}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Samaritan}\p{Script=Mandaic}\p{Script=Adlam}]/u;
+const LETTER = /\p{L}/gu;
+
+/** Blocks that take a direction; the plugin-rendered ones (footnotes) and table rows inherit theirs. */
+const DIR_BLOCKS = new Set([
+  'paragraph_open', 'heading_open', 'blockquote_open', 'alert_open', 'bullet_list_open', 'ordered_list_open', 'list_item_open',
+  'table_open', 'th_open', 'td_open', 'dl_open', 'dt_open', 'dd_open',
+]);
+
+/** How many letters from the start of a document decide its direction: the title and the start of the first line. */
+const DOC_DIR_LETTERS = 40;
+
+function countLetters(text: string, limit = Infinity): Counts {
+  const c = { rtl: 0, ltr: 0 };
+  for (const m of text.matchAll(LETTER)) {
+    if (c.rtl + c.ltr >= limit) break;
+    if (RTL_LETTER.test(m[0])) c.rtl++;
+    else c.ltr++;
+  }
+  return c;
+}
+
+function addCounts(to: Counts, c: Counts): void {
+  to.rtl += c.rtl;
+  to.ltr += c.ltr;
+}
+
+/**
+ * Right-to-left when at least 40% of the letters are in a right-to-left script: a Persian sentence that starts with an
+ * English word ("React یک کتابخانه است") stays right-to-left, which dir="auto" (first letter wins) gets wrong.
+ * No letters at all: no direction (the block follows its parent).
+ */
+function dirOf(c: Counts): 'rtl' | 'ltr' | undefined {
+  const all = c.rtl + c.ltr;
+  if (!all) return undefined;
+  return c.rtl / all >= 0.4 ? 'rtl' : 'ltr';
+}
+
+/** The direction of a piece of text (a heading in the outline, a file name, a search hit). */
+export function textDir(text: string): 'rtl' | 'ltr' | undefined {
+  return dirOf(countLetters(text));
 }
 
 /** Simple `key: value` front matter as rows (nested YAML is shown as written). */
@@ -139,14 +218,14 @@ function parseFrontMatter(yaml: string): [string, string][] {
 export function renderMarkdown(text: string, o: RenderOptions): Rendered {
   const { md, fm } = instance(o);
   fm.value = null;
-  const env: { headings?: Heading[] } = {};
+  const env: { headings?: Heading[]; dir?: 'rtl' | 'ltr' } = {};
   const raw = md.render(text, env);
   const html = DOMPurify.sanitize(raw, {
     USE_PROFILES: { html: true, svg: true, mathMl: true },
     ADD_ATTR: ['target', 'aria-hidden', 'dir', 'start', 'checked', 'disabled'],
     FORBID_TAGS: ['style', 'form', 'iframe', 'object', 'embed'],
   });
-  return { html, headings: env.headings ?? [], frontMatter: fm.value ? parseFrontMatter(fm.value) : null };
+  return { html, headings: env.headings ?? [], frontMatter: fm.value ? parseFrontMatter(fm.value) : null, dir: env.dir ?? 'ltr' };
 }
 
 export function docStats(text: string): DocStats {

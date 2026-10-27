@@ -3,20 +3,26 @@
 import { ListTree, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { fuzzy } from '../lib/fuzzy';
-import { renderMarkdown } from '../markdown/render';
+import { renderMarkdown, textDir } from '../markdown/render';
 import { activeDoc, useDocuments } from '../store/documents';
 import { useSettings } from '../store/settings';
 import { useUi } from '../store/ui';
 import { scrollToHeading } from './DocumentView';
 
-export function useHeadings() {
+/** The active document's headings and main direction. */
+export function useOutline() {
   const text = useDocuments((s) => activeDoc(s)?.text ?? '');
   const s = useSettings((x) => x.settings);
-  return useMemo(() => renderMarkdown(text, { typographer: s.typographer, breaks: s.breaks, linkify: s.linkify, math: s.math }).headings, [text, s.typographer, s.breaks, s.linkify, s.math]);
+  return useMemo(() => {
+    const r = renderMarkdown(text, { typographer: s.typographer, breaks: s.breaks, linkify: s.linkify, math: s.math });
+    return { headings: r.headings, dir: r.dir };
+  }, [text, s.typographer, s.breaks, s.linkify, s.math]);
 }
 
+export const useHeadings = () => useOutline().headings;
+
 export function Outline() {
-  const headings = useHeadings();
+  const { headings, dir } = useOutline();
   const active = useUi((s) => s.activeHeading);
   const hasDoc = useDocuments((s) => !!s.active);
   const [filter, setFilter] = useState('');
@@ -33,7 +39,8 @@ export function Outline() {
           <input className="outline-filter-input" placeholder="Filter headings" value={filter} onChange={(e) => setFilter(e.target.value)} spellCheck={false} />
         </div>
       )}
-      <div className="panel-body tree" role="tree" aria-label="Headings">
+      {/* a right-to-left document lists its headings right-to-left, indented from the right */}
+      <div className="panel-body tree" role="tree" aria-label="Headings" dir={dir}>
         {!hasDoc && <div className="panel-empty">Open a document to see its outline.</div>}
         {hasDoc && headings.length === 0 && (
           <div className="panel-empty">
@@ -47,12 +54,12 @@ export function Outline() {
             role="treeitem"
             aria-selected={h.id === active}
             className={`tree-row outline-row level-${h.level}${h.id === active ? ' selected' : ''}`}
-            style={{ paddingLeft: 10 + (filter ? 0 : (h.level - top) * 14) }}
+            style={{ paddingInlineStart: 10 + (filter ? 0 : (h.level - top) * 14) }}
             onClick={() => scrollToHeading(h.id)}
             title={h.text}
           >
             <span className="outline-level">H{h.level}</span>
-            <span className="tree-label" dir="auto">
+            <span className="tree-label" dir={textDir(h.text)}>
               {h.text}
             </span>
           </div>

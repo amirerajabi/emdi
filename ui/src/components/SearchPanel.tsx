@@ -2,7 +2,7 @@
 // heading above the match.
 import { ChevronDown, ChevronRight, LoaderCircle, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { slugify } from '../markdown/render';
+import { slugify, textDir } from '../markdown/render';
 import { basename, dirname, relative } from '../lib/paths';
 import { platform } from '../platform';
 import { useDocuments } from '../store/documents';
@@ -120,7 +120,7 @@ export function SearchPanel() {
             {!collapsed[f.path] &&
               f.hits.map((h) => (
                 <div key={h.line} className="tree-row search-hit" style={{ paddingLeft: 34 }} onClick={() => void useDocuments.getState().open(f.path, { anchor: h.anchor })} title={h.text}>
-                  <span className="tree-label" dir="auto">
+                  <span className="tree-label" dir={textDir(h.text)}>
                     {snippet(h)}
                   </span>
                   <span className="tree-hint">{h.line + 1}</span>

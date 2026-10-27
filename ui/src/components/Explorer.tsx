@@ -5,6 +5,7 @@ import { copyText, openFolder } from '../app/actions';
 import { extname, isUnder, norm, relative, samePath } from '../lib/paths';
 import { platform, type FsEntry } from '../platform';
 import { useDocuments } from '../store/documents';
+import { textDir } from '../markdown/render';
 import { useSettings } from '../store/settings';
 import { toast } from '../store/ui';
 import { useWorkspace } from '../store/workspace';
@@ -215,7 +216,7 @@ export function Explorer() {
             >
               <span className="tree-chevron">{entry.isDir ? open ? <ChevronDown size={14} /> : <ChevronRight size={14} /> : null}</span>
               <FileIcon path={entry.path} isDir={entry.isDir} open={open} />
-              <span className="tree-label" dir="auto">
+              <span className="tree-label" dir={textDir(entry.name)}>
                 {entry.name}
               </span>
             </div>
