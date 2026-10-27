@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { useUi } from '../../store/ui';
 
-export type SettingsSection = 'general' | 'appearance' | 'reader' | 'updates';
+export type SettingsSection = 'general' | 'appearance' | 'reader' | 'editor' | 'updates';
 
 interface SettingsNavState {
   section: SettingsSection;

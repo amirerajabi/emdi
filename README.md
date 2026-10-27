@@ -1,12 +1,12 @@
 # Emdi
 
-A beautiful Markdown viewer: open a `.md` file or a folder of them and read them the way they were meant to look, with
-GitHub-flavoured Markdown, highlighted code, math, diagrams, an outline and live reload, in light and dark themes.
+A beautiful Markdown viewer and editor: open a `.md` file or a folder of them and read them the way they were meant to
+look, with GitHub-flavoured Markdown, highlighted code, math, diagrams, an outline and live reload, in light and dark
+themes. Write with a formatting toolbar, a `/` menu for every block and a live preview beside the text.
 
 Emdi follows the architecture and UI structure of [Kod](https://github.com/amirerajabi/kod) (and Rowlit): an
 **Electron** shell and a **React** UI, with the same top bar, tool window stripe, side panel, tabs, status bar, Search
-Everywhere, Settings, themes and self-updater. Viewing is the first step; editing and writing Markdown come next, on the
-same documents store.
+Everywhere, Settings, themes and self-updater.
 
 ```
 desktop/   Electron shell: window (Windows caption overlay, macOS inset), emdi://app protocol, emdi-file:// for local
@@ -14,6 +14,8 @@ desktop/   Electron shell: window (Windows caption overlay, macOS inset), emdi:/
 ui/        React UI: top bar, tool window stripe, side panel (Explorer, Outline, Find in Files), document tabs,
            the reader, status bar, palette, settings, dialogs
   markdown/   markdown-it with GitHub's extensions, KaTeX, highlight.js, Mermaid; the reader's styles
+  editor/     the CodeMirror 6 Markdown editor: formatting and insert commands, the toolbar, the / menu, images,
+              split-view scroll sync
 docs/      release notes
 ```
 
@@ -29,6 +31,23 @@ docs/      release notes
 - Links to other Markdown files open in Emdi at the linked `#heading`; local images are shown; web links open in the
   browser; other files open in their default app.
 - Documents reload when their file changes on disk.
+
+**Writing**
+- Three modes per document: View, Edit and Split (the editor beside a live preview that scrolls with it). Alt+click
+  (or double-click in Split) a paragraph of the preview to edit it there.
+- A formatting toolbar: paragraph style (Text, Heading 1–6), bold, italic, strikethrough, highlight, inline code, link,
+  bulleted / numbered / task lists, quote, code block by language, a table by size (grid picker), images, alerts,
+  Mermaid diagrams (flowchart, sequence, class, state, ER, Gantt, pie, mind map, timeline), math, divider, footnote,
+  collapsible section, table of contents, front matter, date.
+- Type `/` for the same blocks as a menu, filtered as you type (`/tab` → Table). Every item is also in Find Action
+  ("Insert: Table").
+- Lists and tasks continue on Enter (twice to end the list), Tab / Shift+Tab indent, Ctrl+Enter checks a task.
+- Tables: Tab and Shift+Tab move between cells (a new row after the last), Format Table lines the columns up.
+- Paste a URL over selected text to make a link; paste or drop an image to save it next to the document (in
+  `images/`) and link it.
+- Find and Replace, undo history per document, right-to-left lines, spell checking with suggestions on right-click.
+- New documents (Ctrl+N), Save / Save As, Auto Save (a moment after typing, or when Emdi loses focus), unsaved markers,
+  and a question before closing anything unsaved. New file, new folder, rename and delete in the Explorer.
 
 **Finding your way**
 - Explorer for a folder: Markdown files and the folders that hold them (or every file), following the active tab.
@@ -96,6 +115,13 @@ git tag v0.1.0 && git push origin v0.1.0
 
 | Action | Keys |
 |---|---|
+| New / save / save as | Ctrl+N / Ctrl+S / Ctrl+Shift+S |
+| View / Edit / Split, toggle View and Edit | Ctrl+Alt+1 / Ctrl+Alt+2 / Ctrl+Alt+3, Ctrl+/ |
+| Bold / italic / strikethrough / highlight / inline code / link | Ctrl+B / Ctrl+I / Ctrl+Shift+X / Ctrl+Shift+H / Ctrl+E / Ctrl+K |
+| Text / Heading 1–6 | Ctrl+0 / Ctrl+1…6 |
+| Bulleted / numbered / task list / quote | Ctrl+Shift+8 / Ctrl+Shift+7 / Ctrl+Shift+9 / Ctrl+Shift+. |
+| Code block / check a task | Ctrl+Alt+C / Ctrl+Enter |
+| Insert menu / find and replace | / / Ctrl+F, Ctrl+H |
 | Search everywhere / find action | Shift Shift, Ctrl+Shift+N / Ctrl+Shift+A, Ctrl+Shift+P, F1 |
 | Open file / open folder | Ctrl+O / Ctrl+K Ctrl+O |
 | Go to heading / recent files | Ctrl+Shift+O / Ctrl+E |
@@ -109,7 +135,3 @@ git tag v0.1.0 && git push origin v0.1.0
 | Settings / keyboard shortcuts | Ctrl+, / Ctrl+K Ctrl+S |
 
 On macOS, Ctrl is ⌘.
-
-## Not (yet) in Emdi
-
-- Editing and writing Markdown (with a toolbar, live preview and shortcuts): the next step.

@@ -2,7 +2,7 @@
 import { basename, samePath } from '../lib/paths';
 import { loadRaw } from '../lib/storage';
 import { platform } from '../platform';
-import { restoreSession, useDocuments } from '../store/documents';
+import { installAutoSave, restoreSession, useDocuments } from '../store/documents';
 import { onSystemThemeChange, useSettings } from '../store/settings';
 import { toast } from '../store/ui';
 import { useWorkspace } from '../store/workspace';
@@ -54,13 +54,16 @@ export async function boot(): Promise<void> {
   }
   await openPaths(fromArgs);
   installDrop();
+  installAutoSave();
   installUpdateWiring();
 
   // window title follows the document and folder
   const title = () => {
     const active = useDocuments.getState().active;
     const root = useWorkspace.getState().root;
-    platform.setTitle([active ? basename(active) : null, root ? basename(root) : null, 'Emdi'].filter(Boolean).join(' – '));
+    const doc = useDocuments.getState().docs.find((d) => d.path === active);
+    const name = doc ? `${doc.text !== doc.saved && !doc.loading ? '● ' : ''}${doc.title}` : null;
+    platform.setTitle([name, root ? basename(root) : null, 'Emdi'].filter(Boolean).join(' – '));
   };
   useWorkspace.subscribe(title);
   useDocuments.subscribe(title);

@@ -1,6 +1,6 @@
 import { File, Hash, History, Terminal } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { COMMANDS, keyLabel } from '../app/commands';
+import { COMMANDS, shortcutOf } from '../app/commands';
 import { fuzzy } from '../lib/fuzzy';
 import { basename, dirname, relative } from '../lib/paths';
 import { recentDocs, useDocuments } from '../store/documents';
@@ -71,7 +71,7 @@ export function CommandPalette() {
         .filter((x) => x.m)
         .sort((a, b) => b.m!.score - a.m!.score)
         .slice(0, 100)
-        .map(({ c, m }) => ({ key: c.id, label: `${c.category}: ${c.title}`, hits: m!.hits, icon: <Terminal size={14} />, keys: c.keys?.[0] ? keyLabel(c.keys[0]) : undefined, run: () => void c.run() }));
+        .map(({ c, m }) => ({ key: c.id, label: `${c.category}: ${c.title}`, hits: m!.hits, icon: <Terminal size={14} />, keys: shortcutOf(c.id), run: () => void c.run() }));
     }
     if (mode === 'headings') {
       return headings
@@ -136,6 +136,7 @@ export function CommandPalette() {
           {mode === 'files' ? <File size={16} /> : mode === 'commands' ? <Terminal size={16} /> : mode === 'headings' ? <Hash size={16} /> : <History size={16} />}
           <input
             ref={input}
+            autoFocus
             className="palette-input"
             value={text}
             placeholder={placeholder}

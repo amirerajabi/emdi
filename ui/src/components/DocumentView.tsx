@@ -24,6 +24,20 @@ const FONTS: Record<Exclude<Settings['readerFont'], 'custom'>, string> = {
   system: 'system-ui, -apple-system, sans-serif',
 };
 
+/** The page's fonts and sizes as CSS variables (the reader and the editor share them). */
+export function readerStyle(s: Settings): CSSProperties {
+  const reader = s.readerFont === 'custom' && s.readerFontFamily.trim() ? s.readerFontFamily : FONTS[s.readerFont === 'custom' ? 'sans' : s.readerFont];
+  return {
+    '--reader-width': WIDTHS[s.contentWidth],
+    '--reader-size': `${(s.readerFontSize * s.zoom) / 100}px`,
+    '--reader-line': String(s.lineHeight),
+    '--font-reader': reader,
+    '--font-code': s.codeFontFamily,
+    '--font-editor': s.editorFont === 'mono' ? s.codeFontFamily : reader,
+    '--editor-size': `${(s.editorFontSize * s.zoom) / 100}px`,
+  } as CSSProperties;
+}
+
 /** The element that scrolls the active document (Find, the outline and commands use it). */
 export const readerScroll = () => document.querySelector<HTMLElement>('.reader-scroll');
 export const readerBody = () => document.querySelector<HTMLElement>('.markdown-body');
@@ -98,7 +112,17 @@ export function DocumentView({ doc }: { doc: Doc }) {
     requestAnimationFrame(report);
   };
 
+  /** The source line of the block under the pointer, to edit it. */
+  const jumpToSource = (e: React.MouseEvent) => {
+    const block = (e.target as HTMLElement).closest<HTMLElement>('[data-line]');
+    if (!block) return;
+    e.preventDefault();
+    window.getSelection()?.removeAllRanges();
+    useDocuments.getState().setMode(doc.path, doc.mode === 'view' ? 'split' : doc.mode, Number(block.dataset.line));
+  };
+
   const onClick = (e: React.MouseEvent) => {
+    if (e.altKey && e.button === 0) return jumpToSource(e);
     const target = e.target as HTMLElement;
     const copy = target.closest<HTMLElement>('[data-copy]');
     if (copy) {
@@ -126,13 +150,7 @@ export function DocumentView({ doc }: { doc: Doc }) {
     );
   }
 
-  const style = {
-    '--reader-width': WIDTHS[s.contentWidth],
-    '--reader-size': `${(s.readerFontSize * s.zoom) / 100}px`,
-    '--reader-line': String(s.lineHeight),
-    '--font-reader': s.readerFont === 'custom' && s.readerFontFamily.trim() ? s.readerFontFamily : FONTS[s.readerFont === 'custom' ? 'sans' : s.readerFont],
-    '--font-code': s.codeFontFamily,
-  } as CSSProperties;
+  const style = readerStyle(s);
 
   return (
     <div className="reader" style={style}>
@@ -144,7 +162,7 @@ export function DocumentView({ doc }: { doc: Doc }) {
           </div>
         ) : (
           <div className="reader-layout" dir={rendered.dir}>
-            <article ref={bodyRef} className={`markdown-body${s.numberHeadings ? ' numbered' : ''}`} dir={rendered.dir} onClick={onClick} onAuxClick={onClick}>
+            <article ref={bodyRef} className={`markdown-body${s.numberHeadings ? ' numbered' : ''}`} dir={rendered.dir} onClick={onClick} onAuxClick={onClick} onDoubleClick={(e) => doc.mode === 'split' && jumpToSource(e)}>
               {s.showFrontMatter && rendered.frontMatter && rendered.frontMatter.length > 0 && <FrontMatter rows={rendered.frontMatter} />}
               <div dangerouslySetInnerHTML={{ __html: rendered.html }} />
               {!doc.text.trim() && <p className="md-empty">This document is empty.</p>}

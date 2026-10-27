@@ -1,7 +1,7 @@
 import { Keyboard, Monitor, Moon, Sun } from 'lucide-react';
 import { keyLabel } from '../../app/commands';
 import { isMac } from '../../platform';
-import { DEFAULT_SETTINGS, useSettings, ZOOM_STEPS } from '../../store/settings';
+import { DEFAULT_SETTINGS, useSettings, ZOOM_STEPS, type DocModeSetting } from '../../store/settings';
 import { useUi } from '../../store/ui';
 import { Card, FontPicker, Num, Row, Segmented, Select, ToggleRow } from './controls';
 import { AppThemePicker, CodeThemePicker } from './ThemePicker';
@@ -135,6 +135,71 @@ export function ReaderSection() {
         <ToggleRow id="set-linkify" label="Turn web addresses into links" keywords="linkify links url autolink" checked={s.linkify} onChange={(v) => up({ linkify: v })} />
         <ToggleRow id="set-math" label="Math" hint="$inline$ and $$display$$ formulas with KaTeX" keywords="math latex katex formula equation" checked={s.math} onChange={(v) => up({ math: v })} />
         <ToggleRow id="set-mermaid" label="Mermaid diagrams" hint="```mermaid code blocks drawn as flowcharts, sequence diagrams and more" keywords="mermaid diagram chart flowchart sequence" checked={s.mermaid} onChange={(v) => up({ mermaid: v })} />
+      </Card>
+    </>
+  );
+}
+
+export function EditorSection() {
+  const s = useS();
+  const modes: [DocModeSetting, string][] = [
+    ['view', 'View (read)'],
+    ['edit', 'Edit'],
+    ['split', 'Split: edit with preview'],
+  ];
+  return (
+    <>
+      <Card title="Opening and saving">
+        <Row label="Markdown files open in" htmlFor="set-openmode" hint={`${keyLabel('Ctrl+/')} switches between View and Edit; ${keyLabel('Ctrl+Alt+3')} splits`} keywords="mode view edit split open default">
+          <Select id="set-openmode" value={s.openMode} options={modes} onChange={(v) => up({ openMode: v })} />
+        </Row>
+        <Row label="New documents start in" htmlFor="set-newmode" keywords="new document mode untitled">
+          <Select id="set-newmode" value={s.newMode} options={modes} onChange={(v) => up({ newMode: v })} />
+        </Row>
+        <Row label="Auto save" htmlFor="set-autosave" hint="Also before a tab or the window closes. New documents are saved the first time with Save (Ctrl+S)." keywords="save automatically delay focus">
+          <Select
+            id="set-autosave"
+            value={s.autoSave}
+            options={[
+              ['afterDelay', 'A moment after typing stops'],
+              ['onFocusChange', 'When Emdi loses focus'],
+              ['off', 'Off: save with Ctrl+S'],
+            ]}
+            onChange={(v) => up({ autoSave: v })}
+          />
+        </Row>
+        {s.autoSave === 'afterDelay' && (
+          <Row label="Save after" htmlFor="set-autosave-delay" keywords="auto save delay seconds">
+            <Select<number> id="set-autosave-delay" value={s.autoSaveDelay} options={[[500, 'Half a second'], [1000, '1 second'], [2000, '2 seconds'], [5000, '5 seconds']]} onChange={(v) => up({ autoSaveDelay: v })} />
+          </Row>
+        )}
+        <Row label="Image folder" htmlFor="set-imgdir" hint="Pasted and dropped images are saved here, next to the document; empty = beside the document" keywords="images paste drop folder assets attachments">
+          <input id="set-imgdir" className="input settings-text" style={{ width: 200 }} value={s.imageFolder} spellCheck={false} onChange={(e) => up({ imageFolder: e.target.value })} />
+        </Row>
+      </Card>
+      <Card title="Writing">
+        <ToggleRow id="set-toolbar" label="Formatting toolbar" hint="Headings, marks, lists and everything to insert, above the text" keywords="toolbar buttons format insert" checked={s.showToolbar} onChange={(v) => up({ showToolbar: v })} />
+        <ToggleRow id="set-slash" label="Type / to insert" hint="A menu of headings, lists, tables, images, alerts, diagrams and more, filtered as you type" keywords="slash menu commands insert blocks" checked={s.slashCommands} onChange={(v) => up({ slashCommands: v })} />
+        <ToggleRow id="set-spell" label="Check spelling" hint="Right-click a marked word for suggestions" keywords="spellcheck spelling dictionary" checked={s.spellcheck} onChange={(v) => up({ spellcheck: v })} />
+        <ToggleRow id="set-wrap" label="Wrap long lines" keywords="word wrap soft wrap" checked={s.wordWrap} onChange={(v) => up({ wordWrap: v })} />
+        <ToggleRow id="set-lines" label="Line numbers" keywords="gutter line numbers" checked={s.lineNumbers} onChange={(v) => up({ lineNumbers: v })} />
+        <ToggleRow id="set-sync" label="Scroll the preview with the text" hint="In Split mode, the editor and the preview stay at the same place" keywords="sync scroll split preview" checked={s.syncScroll} onChange={(v) => up({ syncScroll: v })} />
+      </Card>
+      <Card title="Editor font">
+        <Row label="Font" keywords="editor font mono reader">
+          <Segmented
+            label="Editor font"
+            value={s.editorFont}
+            onChange={(v) => up({ editorFont: v })}
+            options={[
+              { value: 'reader', label: 'Reading font' },
+              { value: 'mono', label: 'Code font' },
+            ]}
+          />
+        </Row>
+        <Row label="Font size" htmlFor="set-efs" keywords="editor font size">
+          <Num id="set-efs" value={s.editorFontSize} min={11} max={28} onChange={(v) => up({ editorFontSize: v })} />
+        </Row>
       </Card>
     </>
   );

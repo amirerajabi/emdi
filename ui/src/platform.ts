@@ -24,6 +24,16 @@ export interface Platform {
   listDir(dir: string, opts?: { all?: boolean }): Promise<FsEntry[]>;
   listFiles(root: string): Promise<string[]>;
   stat(path: string): Promise<{ isDir: boolean; size: number; mtime: number } | null>;
+  writeFile(path: string, text: string): Promise<{ mtime: number }>;
+  writeBytes(path: string, data: Uint8Array): Promise<void>;
+  /** A new file (with text) or folder; fails when the name is taken. */
+  create(path: string, isDir: boolean, text?: string): Promise<void>;
+  rename(from: string, to: string): Promise<void>;
+  /** To the Recycle Bin / Trash. */
+  trash(path: string): Promise<void>;
+  pickSavePath(title?: string, defaultPath?: string): Promise<string | null>;
+  /** Desktop: called before the window closes; the shell waits (up to 5 s) for the returned promise. */
+  onBeforeClose?(cb: () => Promise<void>): void;
   /** The files and folders to watch (replaces the previous set). */
   watch(paths: string[]): Promise<void>;
   onFsChanged(cb: (c: FsChanges) => void): () => void;
@@ -112,6 +122,28 @@ function browserPlatform(): Platform {
     },
     async stat(path) {
       return memory.has(path) ? { isDir: false, size: memory.get(path)!.length, mtime: 0 } : null;
+    },
+    async writeFile(path, text) {
+      memory.set(path, text);
+      return { mtime: Date.now() };
+    },
+    async writeBytes() {
+      throw new Error('Saving images needs the desktop app');
+    },
+    async create(path, isDir, text = '') {
+      if (memory.has(path)) throw new Error('That name is taken');
+      if (!isDir) memory.set(path, text);
+    },
+    async rename(from, to) {
+      memory.set(to, memory.get(from) ?? '');
+      memory.delete(from);
+    },
+    async trash(path) {
+      memory.delete(path);
+    },
+    async pickSavePath(_title, defaultPath) {
+      const name = window.prompt('File name', defaultPath?.split(/[\\/]/).pop() ?? 'Untitled.md');
+      return name ? `/browser/${name}` : null;
     },
     async watch() {},
     onFsChanged: () => () => {},

@@ -72,3 +72,14 @@ export function fileUrl(path: string): string {
   const p = path.replace(/\\/g, '/');
   return `emdi-file://${p.startsWith('/') ? '' : '/'}${p.split('/').map(encodeURIComponent).join('/').replace(/^\/([A-Za-z])%3A/, '/$1:')}`;
 }
+
+/** The path of `to` as seen from the folder `from` (../ where needed); `to` itself when they share no root. */
+export function relativePath(from: string, to: string): string {
+  const a = norm(from).split(/[\\/]/);
+  const b = to.replace(/[\\/]+$/, '').split(/[\\/]/);
+  const bn = norm(to).split(/[\\/]/);
+  if (a[0] !== bn[0]) return to;
+  let i = 0;
+  while (i < a.length && i < bn.length && a[i] === bn[i]) i++;
+  return [...Array(a.length - i).fill('..'), ...b.slice(i)].join('/') || '.';
+}

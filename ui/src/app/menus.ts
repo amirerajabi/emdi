@@ -4,12 +4,12 @@ import { useSettings } from '../store/settings';
 import { useUi } from '../store/ui';
 import { useWorkspace } from '../store/workspace';
 import { openRecent } from './actions';
-import { commandById, keyLabel } from './commands';
+import { commandById, shortcutOf } from './commands';
 
 const c = (id: string, label?: string): MenuItem => {
   const cmd = commandById(id);
   if (!cmd) return { label: id, disabled: true };
-  return { label: label ?? cmd.title, shortcut: cmd.keys?.[0] ? keyLabel(cmd.keys[0]) : undefined, run: () => void cmd.run() };
+  return { label: label ?? cmd.title, shortcut: shortcutOf(id), run: () => void cmd.run() };
 };
 
 const checked = (item: MenuItem, on: boolean): MenuItem => (item === 'separator' ? item : { ...item, checked: on });
@@ -27,7 +27,39 @@ export function appMenu(): MenuItem[] {
   return [
     {
       label: 'File',
-      submenu: [c('file.open'), c('file.openFolder'), { label: 'Open Recent', submenu: recentMenu() }, 'separator', c('file.reload'), c('file.close'), c('file.closeAll'), c('file.closeFolder'), 'separator', c('file.exportPdf'), c('file.print'), 'separator', c('file.copyPath'), c('file.copySource'), 'separator', c('file.settings')],
+      submenu: [c('file.new'), c('file.open'), c('file.openFolder'), { label: 'Open Recent', submenu: recentMenu() }, 'separator', c('file.save'), c('file.saveAs'), c('file.saveAll'), 'separator', c('file.reload'), c('file.close'), c('file.closeAll'), c('file.closeFolder'), 'separator', c('file.exportPdf'), c('file.print'), 'separator', c('file.copyPath'), c('file.copySource'), 'separator', c('file.settings')],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        c('edit.undo'),
+        c('edit.redo'),
+        'separator',
+        c('nav.find'),
+        c('edit.replace'),
+        'separator',
+        {
+          label: 'Format',
+          submenu: [...['bold', 'italic', 'strike', 'highlight', 'code', 'sub', 'sup'].map((i) => c(`insert.${i}`)), 'separator', ...['paragraph', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((i) => c(`insert.${i}`)), 'separator', ...['bullet', 'ordered', 'task', 'quote'].map((i) => c(`insert.${i}`))],
+        },
+        {
+          label: 'Insert',
+          submenu: [
+            ...['link', 'image', 'imageUrl', 'table', 'codeblock', 'divider'].map((i) => c(`insert.${i}`)),
+            'separator',
+            ...['note', 'tip', 'important', 'warning', 'caution'].map((i) => c(`insert.${i}`)),
+            'separator',
+            ...['mathInline', 'mathBlock', 'footnote', 'details'].map((i) => c(`insert.${i}`)),
+            { label: 'Diagram', submenu: ['flowchart', 'sequence', 'class', 'state', 'er', 'gantt', 'pie', 'mindmap', 'timeline'].map((i) => c(`insert.mermaid.${i}`)) },
+            'separator',
+            ...['toc', 'frontMatter', 'date'].map((i) => c(`insert.${i}`)),
+          ],
+        },
+        c('edit.formatTable'),
+        'separator',
+        checked(c('edit.toggleToolbar', 'Formatting Toolbar'), s.showToolbar),
+        checked(c('edit.toggleSpellcheck', 'Spell Checking'), s.spellcheck),
+      ],
     },
     {
       label: 'Navigate',
@@ -42,6 +74,11 @@ export function appMenu(): MenuItem[] {
         { label: 'Tool Windows', submenu: toolWindowsMenu() },
         c('view.toggleDock'),
         checked(c('view.focus', 'Reading Mode'), ui.focusMode),
+        'separator',
+        c('view.modeView', 'View'),
+        c('view.modeEdit', 'Edit'),
+        c('view.modeSplit', 'Split'),
+        c('view.toggleEdit'),
         'separator',
         c('view.zoomIn'),
         c('view.zoomOut'),

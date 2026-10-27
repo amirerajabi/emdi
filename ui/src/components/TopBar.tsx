@@ -1,4 +1,4 @@
-import { BookOpen, ChevronDown, FileText, FolderOpen, Menu as MenuIcon, Moon, PanelLeft, Printer, Search, Settings, Sun, SunMoon } from 'lucide-react';
+import { BookOpen, ChevronDown, FilePlus2, FileText, FolderOpen, Menu as MenuIcon, Moon, PanelLeft, Printer, Search, Settings, Sun, SunMoon } from 'lucide-react';
 import { openFile, openFolder, openRecent } from '../app/actions';
 import { runCommand, shortcutOf } from '../app/commands';
 import { appMenu } from '../app/menus';
@@ -27,6 +27,7 @@ export function TopBar() {
   const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
 
   const workspaceMenu = (): MenuItem[] => [
+    { label: 'New Document', icon: <FilePlus2 size={14} />, shortcut: shortcutOf('file.new'), run: () => runCommand('file.new') },
     { label: 'Open File…', icon: <FileText size={14} />, shortcut: shortcutOf('file.open'), run: () => void openFile() },
     { label: 'Open Folder…', icon: <FolderOpen size={14} />, shortcut: shortcutOf('file.openFolder'), run: () => void openFolder() },
     'separator',
@@ -62,6 +63,9 @@ export function TopBar() {
         </span>
       </button>
       <div className="flex-1" />
+      <button className="icon-btn" title={tip('New document', 'file.new')} onClick={() => runCommand('file.new')}>
+        <FilePlus2 size={16} />
+      </button>
       {hasDoc && (
         <>
           <button className={`icon-btn${focus ? ' on' : ''}`} title={tip('Reading mode', 'view.focus')} onClick={() => runCommand('view.focus')}>

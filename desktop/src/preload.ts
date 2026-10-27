@@ -19,6 +19,21 @@ contextBridge.exposeInMainWorld('emdi', {
   listDir: (dir: string, opts?: { all?: boolean }) => ipcRenderer.invoke('fs:list', String(dir), { all: opts?.all === true }),
   listFiles: (root: string) => ipcRenderer.invoke('fs:files', String(root)),
   stat: (path: string) => ipcRenderer.invoke('fs:stat', String(path)),
+  writeFile: (path: string, text: string): Promise<{ mtime: number }> => ipcRenderer.invoke('fs:write', String(path), String(text)),
+  writeBytes: (path: string, data: Uint8Array): Promise<void> => ipcRenderer.invoke('fs:writeBytes', String(path), data),
+  create: (path: string, isDir: boolean, text?: string): Promise<void> => ipcRenderer.invoke('fs:create', String(path), isDir === true, text ?? ''),
+  rename: (from: string, to: string): Promise<void> => ipcRenderer.invoke('fs:rename', String(from), String(to)),
+  trash: (path: string): Promise<void> => ipcRenderer.invoke('fs:trash', String(path)),
+  pickSavePath: (title?: string, defaultPath?: string): Promise<string | null> => ipcRenderer.invoke('dialog:save', title, defaultPath),
+  /** Before the window closes: the UI saves its documents (Auto Save), then the shell closes it. */
+  onBeforeClose: (cb: () => Promise<void>) => {
+    ipcRenderer.on('app:before-close', () => {
+      Promise.resolve()
+        .then(cb)
+        .catch(() => undefined)
+        .finally(() => ipcRenderer.send('app:close-ok'));
+    });
+  },
   watch: (paths: string[]) => ipcRenderer.invoke('fs:watch', Array.isArray(paths) ? paths.map(String) : []),
   onFsChanged: (cb: (c: { files: string[]; dirs: string[] }) => void) => listen('fs:changed', cb),
   /** Paths from the command line / Explorer double-click, then any later ones (second instance, macOS open-file). */

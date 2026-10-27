@@ -1,7 +1,7 @@
-import { ChevronDown, ChevronRight, Copy, Eye, EyeOff, ExternalLink, FolderOpen, ListCollapse, RefreshCw, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Eye, EyeOff, ExternalLink, FilePlus, FolderOpen, FolderPlus, ListCollapse, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, type KeyboardEvent } from 'react';
 import { create } from 'zustand';
-import { copyText, openFolder } from '../app/actions';
+import { copyText, createFile, createFolder, deletePath, openFolder, renamePath } from '../app/actions';
 import { extname, isUnder, norm, relative, samePath } from '../lib/paths';
 import { platform, type FsEntry } from '../platform';
 import { useDocuments } from '../store/documents';
@@ -128,8 +128,26 @@ export function Explorer() {
     );
   }
 
+  const dirOf = (entry: FsEntry) => (entry.isDir ? entry.path : entry.path.replace(/[\\/][^\\/]+$/, ''));
   const menuFor = (entry: FsEntry): MenuItem[] => [
-    ...(!entry.isDir && MARKDOWN.has(extname(entry.path)) ? [{ label: 'Open', run: () => void useDocuments.getState().open(entry.path) } as MenuItem, 'separator' as const] : []),
+    ...(!entry.isDir && MARKDOWN.has(extname(entry.path))
+      ? [
+          { label: 'Open', run: () => void useDocuments.getState().open(entry.path) } as MenuItem,
+          { label: 'Edit', run: () => void useDocuments.getState().open(entry.path, { mode: 'edit' }) } as MenuItem,
+          { label: 'Edit with Preview', run: () => void useDocuments.getState().open(entry.path, { mode: 'split' }) } as MenuItem,
+          'separator' as const,
+        ]
+      : []),
+    { label: 'New Markdown File…', icon: <FilePlus size={14} />, run: () => void createFile(dirOf(entry)) },
+    { label: 'New Folder…', icon: <FolderPlus size={14} />, run: () => void createFolder(dirOf(entry)) },
+    'separator',
+    ...(entry.path !== root
+      ? ([
+          { label: 'Rename…', icon: <Pencil size={14} />, shortcut: 'F2', run: () => void renamePath(entry.path, entry.isDir) },
+          { label: 'Delete', icon: <Trash2 size={14} />, shortcut: 'Delete', danger: true, run: () => void deletePath(entry.path, entry.isDir) },
+          'separator',
+        ] as MenuItem[])
+      : []),
     { label: 'Copy Path', icon: <Copy size={14} />, run: () => void copyText(entry.path) },
     { label: 'Copy Relative Path', run: () => void copyText(relative(root, entry.path)) },
     ...(platform.kind === 'electron'
@@ -139,6 +157,12 @@ export function Explorer() {
         ]
       : []),
   ];
+
+  /** The folder new files go in: the selected folder, or the selected file's. */
+  const selectedDir = () => {
+    const row = rows.find((r) => samePath(r.entry.path, selected));
+    return row ? dirOf(row.entry) : root;
+  };
 
   const activate = (entry: FsEntry, pin: boolean) => {
     useExplorer.getState().select(entry.path);
@@ -164,6 +188,8 @@ export function Explorer() {
       if (row.entry.isDir && expanded[norm(row.entry.path)]) useExplorer.getState().toggle(row.entry.path, false);
       else go(rows.findLastIndex((r, k) => k < i && r.depth < row.depth));
     } else if (e.key === 'Enter' && row) activate(row.entry, true);
+    else if (e.key === 'F2' && row) void renamePath(row.entry.path, row.entry.isDir);
+    else if (e.key === 'Delete' && row) void deletePath(row.entry.path, row.entry.isDir);
     else return;
     e.preventDefault();
   };
@@ -174,6 +200,12 @@ export function Explorer() {
         <span className="panel-title" title={root}>
           {root.split(/[\\/]/).filter(Boolean).pop()}
         </span>
+        <button className="icon-btn sm" title="New Markdown file" onClick={() => void createFile(selectedDir())}>
+          <FilePlus size={15} />
+        </button>
+        <button className="icon-btn sm" title="New folder" onClick={() => void createFolder(selectedDir())}>
+          <FolderPlus size={15} />
+        </button>
         <button
           className={`icon-btn sm${showAll ? ' on' : ''}`}
           title={showAll ? 'Show All Files: on' : 'Show All Files (not only Markdown)'}
@@ -192,7 +224,7 @@ export function Explorer() {
           <X size={15} />
         </button>
       </div>
-      <div className="panel-body tree" ref={treeRef} tabIndex={0} onKeyDown={onKeyDown} role="tree" aria-label="Files">
+      <div className="panel-body tree" ref={treeRef} tabIndex={0} onKeyDown={onKeyDown} role="tree" aria-label="Files" onContextMenu={(e) => e.target === e.currentTarget && showContextMenu(e, menuFor({ name: '', path: root, isDir: true, size: 0 }))}>
         {rows.length === 0 && children[norm(root)] && <div className="panel-empty">No Markdown files in this folder.</div>}
         {rows.map(({ entry, depth }) => {
           const open = entry.isDir && !!expanded[norm(entry.path)];

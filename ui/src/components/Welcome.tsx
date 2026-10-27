@@ -1,4 +1,5 @@
-import { ArrowRight, FileText, FolderOpen, X } from 'lucide-react';
+import { ArrowRight, FilePlus2, FileText, FolderOpen, X } from 'lucide-react';
+import { useDocuments } from '../store/documents';
 import { openFile, openFolder, openRecent } from '../app/actions';
 import { keyLabel } from '../app/commands';
 import { basename, dirname } from '../lib/paths';
@@ -14,16 +15,23 @@ export function Welcome() {
           <EmdiMark size={40} />
           <div>
             <div className="welcome-brand-name">Emdi</div>
-            <div className="welcome-brand-tagline">A beautiful Markdown viewer</div>
+            <div className="welcome-brand-tagline">A beautiful Markdown viewer and editor</div>
           </div>
         </div>
         <div>
-          <h1>Read Markdown the way it was meant to look.</h1>
-          <p className="welcome-lead">GitHub-flavoured Markdown with tables, task lists, alerts, footnotes, math, Mermaid diagrams and highlighted code, in light and dark themes, with an outline, search and live reload.</p>
+          <h1>Read and write Markdown beautifully.</h1>
+          <p className="welcome-lead">GitHub-flavoured Markdown with tables, task lists, alerts, footnotes, math, Mermaid diagrams and highlighted code. Write with a toolbar, a / menu for every block and a live preview beside the text.</p>
         </div>
         <section>
           <h2>Start</h2>
           <div className="action-cards">
+            <button className="action-card" onClick={() => useDocuments.getState().newDocument()}>
+              <span className="action-card-icon">
+                <FilePlus2 size={20} />
+              </span>
+              <span className="action-card-name">New document</span>
+              <span className="action-card-blurb">Write with a toolbar, a / menu and a live preview.</span>
+            </button>
             <button className="action-card" onClick={() => void openFile()}>
               <span className="action-card-icon">
                 <FileText size={20} />
@@ -73,6 +81,9 @@ export function Welcome() {
           </span>
           <span>
             Find action <span className="kbd-group"><kbd>{keyLabel('Ctrl+Shift+A')}</kbd></span>
+          </span>
+          <span>
+            New <span className="kbd-group"><kbd>{keyLabel('Ctrl+N')}</kbd></span>
           </span>
           <span>
             Open file <span className="kbd-group"><kbd>{keyLabel('Ctrl+O')}</kbd></span>

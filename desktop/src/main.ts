@@ -1,9 +1,9 @@
 // Emdi desktop shell: one window, the UI on emdi://app (or the Vite dev server), files read by the main process.
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme, net, Notification, protocol, screen, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, Notification, protocol, screen, shell } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { FileWatcher, listDir, listMarkdownFiles, readText } from './files';
+import { create, FileWatcher, listDir, listMarkdownFiles, readText, rename, writeBytes, writeText } from './files';
 import { createUpdater } from './updater';
 import type { UpdateController } from './updater-core';
 
@@ -122,7 +122,7 @@ function createWindow(): void {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
-      spellcheck: false,
+      spellcheck: true,
       additionalArguments: [`--emdi-version=${app.getVersion()}`],
     },
   });
@@ -141,7 +141,37 @@ function createWindow(): void {
     }
   };
   win.on('close', save);
+  // the UI saves what Auto Save would (it answers app:close-ok), then the window really closes
+  let closing = false;
+  win.on('close', (e) => {
+    if (closing || !win) return;
+    e.preventDefault();
+    const w = win;
+    const go = () => {
+      if (closing) return;
+      closing = true;
+      ipcMain.removeListener('app:close-ok', go);
+      w.close();
+    };
+    ipcMain.once('app:close-ok', go);
+    setTimeout(go, 5000);
+    w.webContents.send('app:before-close');
+  });
   win.on('closed', () => (win = null));
+
+  // the renderer reports unsaved documents through beforeunload
+  win.webContents.on('will-prevent-unload', (e) => {
+    const choice = dialog.showMessageBoxSync(win!, {
+      type: 'question',
+      buttons: ['Quit without saving', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      title: 'Unsaved changes',
+      message: 'Some documents have unsaved changes.',
+      detail: 'Quit and lose the changes?',
+    });
+    if (choice === 0) e.preventDefault();
+  });
 
   // the window only ever shows Emdi; links open in the browser
   win.webContents.on('will-navigate', (e, url) => {
@@ -153,6 +183,25 @@ function createWindow(): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^(https?|mailto):/.test(url)) void shell.openExternal(url);
     return { action: 'deny' };
+  });
+  // right-click in the editor: spelling suggestions, then cut / copy / paste
+  win.webContents.on('context-menu', (_e, p) => {
+    if (!p.isEditable || !win) return;
+    const wc = win.webContents;
+    const items: Electron.MenuItemConstructorOptions[] = [];
+    if (p.misspelledWord) {
+      for (const s of p.dictionarySuggestions.slice(0, 6)) items.push({ label: s, click: () => wc.replaceMisspelling(s) });
+      if (!p.dictionarySuggestions.length) items.push({ label: 'No suggestions', enabled: false });
+      items.push({ label: 'Add to Dictionary', click: () => wc.session.addWordToSpellCheckerDictionary(p.misspelledWord) }, { type: 'separator' });
+    }
+    items.push(
+      { label: 'Cut', role: 'cut', enabled: p.editFlags.canCut },
+      { label: 'Copy', role: 'copy', enabled: p.editFlags.canCopy },
+      { label: 'Paste', role: 'paste', enabled: p.editFlags.canPaste },
+      { type: 'separator' },
+      { label: 'Select All', role: 'selectAll' },
+    );
+    Menu.buildFromTemplate(items).popup({ window: win });
   });
   if (DEV_URL) win.webContents.on('before-input-event', (_e, input) => input.key === 'F12' && input.control && input.shift && win?.webContents.toggleDevTools());
   win.webContents.on('did-start-loading', () => (rendererReady = false));
@@ -190,6 +239,22 @@ ipcMain.handle('fs:stat', (_e, p: string) => {
   } catch {
     return null;
   }
+});
+ipcMain.handle('fs:write', (_e, p: string, text: string) => writeText(absolute(p), String(text)));
+ipcMain.handle('fs:writeBytes', (_e, p: string, data: Uint8Array) => {
+  if (!(data instanceof Uint8Array)) throw new Error('No data');
+  writeBytes(absolute(p), data);
+});
+ipcMain.handle('fs:create', (_e, p: string, isDir: boolean, text?: string) => create(absolute(p), isDir === true, typeof text === 'string' ? text : ''));
+ipcMain.handle('fs:rename', (_e, from: string, to: string) => rename(absolute(from), absolute(to)));
+ipcMain.handle('fs:trash', (_e, p: string) => shell.trashItem(absolute(p)));
+ipcMain.handle('dialog:save', async (_e, title?: string, defaultPath?: string) => {
+  const r = await dialog.showSaveDialog(win!, {
+    title: title ?? 'Save',
+    defaultPath: typeof defaultPath === 'string' ? defaultPath : undefined,
+    filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdx'] }, { name: 'All files', extensions: ['*'] }],
+  });
+  return r.canceled ? null : (r.filePath ?? null);
 });
 ipcMain.handle('app:pending-paths', () => {
   rendererReady = true;

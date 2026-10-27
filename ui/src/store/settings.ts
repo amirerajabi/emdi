@@ -3,6 +3,7 @@ import { load, save } from '../lib/storage';
 
 export type ReaderFont = 'sans' | 'serif' | 'system' | 'custom';
 export type ContentWidth = 'narrow' | 'normal' | 'wide' | 'full';
+export type DocModeSetting = 'view' | 'edit' | 'split';
 
 export interface Settings {
   theme: 'dark' | 'light' | 'system';
@@ -50,6 +51,27 @@ export interface Settings {
   numberHeadings: boolean;
   /** The "On this page" outline at the right of wide windows. */
   floatingToc: boolean;
+  // ---- editor
+  /** How a Markdown file opens, and how a new document starts. */
+  openMode: DocModeSetting;
+  newMode: DocModeSetting;
+  /** afterDelay: a moment after typing stops; onFocusChange: when Emdi loses focus; also before a tab or the window closes. */
+  autoSave: 'afterDelay' | 'onFocusChange' | 'off';
+  autoSaveDelay: number;
+  /** 'reader': the reading font; 'mono': the code font. */
+  editorFont: 'reader' | 'mono';
+  editorFontSize: number;
+  wordWrap: boolean;
+  lineNumbers: boolean;
+  spellcheck: boolean;
+  /** The formatting and insert toolbar above the editor. */
+  showToolbar: boolean;
+  /** Typing / opens the insert menu. */
+  slashCommands: boolean;
+  /** Split view: the preview follows the editor's scroll (and back). */
+  syncScroll: boolean;
+  /** Pasted and dropped images are saved in this folder next to the document. */
+  imageFolder: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -79,6 +101,19 @@ export const DEFAULT_SETTINGS: Settings = {
   showFrontMatter: true,
   numberHeadings: false,
   floatingToc: true,
+  openMode: 'view',
+  newMode: 'split',
+  autoSave: 'afterDelay',
+  autoSaveDelay: 1000,
+  editorFont: 'reader',
+  editorFontSize: 15,
+  wordWrap: true,
+  lineNumbers: false,
+  spellcheck: true,
+  showToolbar: true,
+  slashCommands: true,
+  syncScroll: true,
+  imageFolder: 'images',
 };
 
 interface SettingsState {

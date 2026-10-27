@@ -1,6 +1,6 @@
 // Settings (Rowlit's dialog): one fixed-size dialog for every section, a sidebar with search and the sections, and a
 // content pane of cards. Typing in the search shows the matching rows of every section at once.
-import { BookOpenText, Download, Palette, Search, Settings as SettingsIcon, SlidersHorizontal, X } from 'lucide-react';
+import { BookOpenText, Download, PenLine, Palette, Search, Settings as SettingsIcon, SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { platform } from '../../platform';
 import { useUi } from '../../store/ui';
@@ -8,7 +8,7 @@ import { useUpdates } from '../../store/updates';
 import { Dialog } from '../common/Dialog';
 import { useSettingsNav, type SettingsSection } from './nav';
 import { SettingsQuery } from './search';
-import { AppearanceSection, GeneralSection, ReaderSection } from './sections';
+import { AppearanceSection, EditorSection, GeneralSection, ReaderSection } from './sections';
 import { UpdatesCard } from './UpdatesCard';
 import './settings.css';
 
@@ -24,6 +24,7 @@ const SECTIONS: SectionDef[] = [
   { id: 'general', label: 'General', icon: <SlidersHorizontal size={16} />, description: 'Startup, files and the essentials.', render: () => <GeneralSection /> },
   { id: 'appearance', label: 'Appearance', icon: <Palette size={16} />, description: 'Color theme, code theme and the window font.', render: () => <AppearanceSection /> },
   { id: 'reader', label: 'Reader', icon: <BookOpenText size={16} />, description: 'Fonts, page width and how Markdown is read.', render: () => <ReaderSection /> },
+  { id: 'editor', label: 'Editor', icon: <PenLine size={16} />, description: 'Writing Markdown: modes, saving, the toolbar and the / menu.', render: () => <EditorSection /> },
   { id: 'updates', label: 'Updates', icon: <Download size={16} />, description: 'Your version of Emdi and new releases.', render: () => <UpdatesCard /> },
 ];
 

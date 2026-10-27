@@ -3,7 +3,14 @@
 import { openSettings } from '../components/settings/nav';
 import { toggleToolWindow } from '../components/ToolStripe';
 import { isMac } from '../platform';
-import { activeDoc, useDocuments } from '../store/documents';
+import { redo, undo } from '@codemirror/commands';
+import { openSearchPanel } from '@codemirror/search';
+import type { EditorView } from '@codemirror/view';
+import { formatTable } from '../editor/format';
+import { EDITOR_ITEMS } from '../editor/items';
+import { keyText } from '../editor/keys';
+import { activeEditor } from '../editor/MarkdownEditor';
+import { activeDoc, useDocuments, type DocMode } from '../store/documents';
 import { effectiveTheme, useSettings, ZOOM_STEPS, type Settings } from '../store/settings';
 import { toast, useUi } from '../store/ui';
 import { useWorkspace } from '../store/workspace';
@@ -18,6 +25,8 @@ export interface Command {
   run: () => void | Promise<void>;
   /** Runs even when a text field has focus. */
   global?: boolean;
+  /** A key shown in menus and the palette that the editor handles itself. */
+  keyHint?: string;
 }
 
 const needsDoc = (fn: () => unknown) => () => {
@@ -43,6 +52,30 @@ function switchTab(d: 1 | -1): void {
   useDocuments.getState().activate(docs[(i + d + docs.length) % docs.length].path);
 }
 
+function setMode(mode: DocMode): void {
+  const d = activeDoc();
+  if (d) useDocuments.getState().setMode(d.path, mode);
+}
+
+/** Runs an editing command on the editor, opening it first when the document is only being viewed. */
+function inEditor(fn: (v: EditorView) => unknown): () => void {
+  return () => {
+    const d = activeDoc();
+    if (!d) return void toast('info', 'Open or create a document first');
+    const v = activeEditor();
+    if (v && d.mode !== 'view') {
+      void fn(v);
+      return;
+    }
+    useDocuments.getState().setMode(d.path, 'edit');
+    // the editor mounts on the next frames
+    setTimeout(() => {
+      const e = activeEditor();
+      if (e) void fn(e);
+    }, 60);
+  };
+}
+
 function toggleFocus(): void {
   const ui = useUi.getState();
   ui.setLayout({ focusMode: !ui.focusMode });
@@ -50,10 +83,14 @@ function toggleFocus(): void {
 
 export const COMMANDS: Command[] = [
   // File
+  { id: 'file.new', title: 'New Document', category: 'File', keys: ['Ctrl+N'], run: () => useDocuments.getState().newDocument(), global: true },
   { id: 'file.open', title: 'Open File…', category: 'File', keys: ['Ctrl+O'], run: openFile, global: true },
+  { id: 'file.save', title: 'Save', category: 'File', keys: ['Ctrl+S'], run: needsDoc(() => useDocuments.getState().save()), global: true },
+  { id: 'file.saveAs', title: 'Save As…', category: 'File', keys: ['Ctrl+Shift+S'], run: needsDoc(() => useDocuments.getState().saveAs()), global: true },
+  { id: 'file.saveAll', title: 'Save All', category: 'File', run: () => void useDocuments.getState().saveAll() },
   { id: 'file.openFolder', title: 'Open Folder…', category: 'File', keys: ['Ctrl+K Ctrl+O'], run: openFolder, global: true },
-  { id: 'file.close', title: 'Close Tab', category: 'File', keys: ['Ctrl+W', 'Ctrl+F4'], run: () => { const a = useDocuments.getState().active; if (a) useDocuments.getState().close(a); }, global: true },
-  { id: 'file.closeAll', title: 'Close All Tabs', category: 'File', keys: ['Ctrl+Shift+W'], run: () => useDocuments.getState().closeMany(useDocuments.getState().docs.map((d) => d.path)) },
+  { id: 'file.close', title: 'Close Tab', category: 'File', keys: ['Ctrl+W', 'Ctrl+F4'], run: () => { const a = useDocuments.getState().active; if (a) void useDocuments.getState().close(a); }, global: true },
+  { id: 'file.closeAll', title: 'Close All Tabs', category: 'File', keys: ['Ctrl+Shift+W'], run: () => void useDocuments.getState().closeMany(useDocuments.getState().docs.map((d) => d.path)) },
   { id: 'file.closeFolder', title: 'Close Folder', category: 'File', run: () => useWorkspace.getState().close() },
   { id: 'file.reload', title: 'Reload from Disk', category: 'File', keys: ['F5'], run: needsDoc(() => useDocuments.getState().reload(useDocuments.getState().active!)) },
   { id: 'file.exportPdf', title: 'Export to PDF…', category: 'File', keys: ['Ctrl+Shift+E'], run: needsDoc(exportPdf) },
@@ -66,12 +103,25 @@ export const COMMANDS: Command[] = [
   { id: 'nav.commands', title: 'Find Action…', category: 'Navigate', keys: ['Ctrl+Shift+A', 'Ctrl+Shift+P', 'F1'], run: () => useUi.getState().openPalette('commands', '>'), global: true },
   { id: 'nav.headings', title: 'Go to Heading…', category: 'Navigate', keys: ['Ctrl+Shift+O', 'Ctrl+F12'], run: needsDoc(() => useUi.getState().openPalette('headings', '#')), global: true },
   { id: 'nav.recentFiles', title: 'Recent Files…', category: 'Navigate', keys: ['Ctrl+E'], run: () => useUi.getState().openPalette('recentFiles'), global: true },
-  { id: 'nav.find', title: 'Find in Document', category: 'Navigate', keys: ['Ctrl+F'], run: needsDoc(() => { useUi.getState().set({ findOpen: true }); window.dispatchEvent(new Event('emdi:find')); }), global: true },
+  { id: 'nav.find', title: 'Find in Document', category: 'Navigate', keys: ['Ctrl+F'], run: needsDoc(() => { const v = activeEditor(); if (v && activeDoc()?.mode === 'edit') { openSearchPanel(v); return; } useUi.getState().set({ findOpen: true }); window.dispatchEvent(new Event('emdi:find')); }), global: true },
   { id: 'nav.findInFiles', title: 'Find in Files', category: 'Navigate', keys: ['Ctrl+Shift+F'], run: () => { useUi.getState().showDock('search'); setTimeout(() => window.dispatchEvent(new Event('emdi:find-in-files')), 0); }, global: true },
   { id: 'nav.nextTab', title: 'Next Tab', category: 'Navigate', keys: ['Ctrl+Tab', 'Alt+Right'], run: () => switchTab(1), global: true },
   { id: 'nav.prevTab', title: 'Previous Tab', category: 'Navigate', keys: ['Ctrl+Shift+Tab', 'Alt+Left'], run: () => switchTab(-1), global: true },
   { id: 'nav.top', title: 'Go to Top', category: 'Navigate', keys: ['Ctrl+Home'], run: () => scrollReader('top') },
   { id: 'nav.bottom', title: 'Go to Bottom', category: 'Navigate', keys: ['Ctrl+End'], run: () => scrollReader('bottom') },
+  // Modes and editing
+  { id: 'view.modeView', title: 'View Mode (read)', category: 'View', keys: ['Ctrl+Alt+1'], run: needsDoc(() => setMode('view')), global: true },
+  { id: 'view.modeEdit', title: 'Edit Mode', category: 'View', keys: ['Ctrl+Alt+2'], run: needsDoc(() => setMode('edit')), global: true },
+  { id: 'view.modeSplit', title: 'Split Mode (edit with preview)', category: 'View', keys: ['Ctrl+Alt+3'], run: needsDoc(() => setMode('split')), global: true },
+  { id: 'view.toggleEdit', title: 'Toggle View / Edit', category: 'View', keys: ['Ctrl+/'], run: needsDoc(() => setMode(activeDoc()!.mode === 'view' ? 'edit' : 'view')), global: true },
+  { id: 'edit.undo', title: 'Undo', category: 'Edit', run: inEditor(undo) },
+  { id: 'edit.redo', title: 'Redo', category: 'Edit', run: inEditor(redo) },
+  { id: 'edit.replace', title: 'Find and Replace', category: 'Edit', keys: ['Ctrl+H'], run: inEditor(openSearchPanel), global: true },
+  { id: 'edit.formatTable', title: 'Format Table', category: 'Edit', run: inEditor(formatTable) },
+  { id: 'edit.toggleToolbar', title: 'Toggle Formatting Toolbar', category: 'Edit', run: toggle('showToolbar') },
+  { id: 'edit.toggleSpellcheck', title: 'Toggle Spell Checking', category: 'Edit', run: toggle('spellcheck') },
+  // every editor item, in Find Action ("Insert: Table"); their keys work inside the editor
+  ...EDITOR_ITEMS.map((i): Command => ({ id: `insert.${i.id}`, title: i.title, category: ['Text', 'Headings', 'Lists'].includes(i.group) ? 'Format' : 'Insert', keyHint: i.key ? keyText(i.key) : undefined, run: inEditor(i.run) })),
   // View
   { id: 'view.explorer', title: 'Explorer', category: 'View', keys: ['Alt+1'], run: () => toggleToolWindow('explorer'), global: true },
   { id: 'view.outline', title: 'Outline', category: 'View', keys: ['Alt+7'], run: () => toggleToolWindow('outline'), global: true },
@@ -104,8 +154,9 @@ export function keyLabel(k: string): string {
 }
 
 export const shortcutOf = (id: string) => {
-  const k = commandById(id)?.keys?.[0];
-  return k ? keyLabel(k) : undefined;
+  const c = commandById(id);
+  const k = c?.keys?.[0];
+  return k ? keyLabel(k) : c?.keyHint;
 };
 
 // ---------------------------------------------------------------- key dispatch
@@ -133,6 +184,9 @@ function chordOf(e: KeyboardEvent): string {
   return [...parts, key].join('+');
 }
 
+/** Keys the Markdown editor uses itself (bold, italic, link, inline code, find, headings): left to it while it has focus. */
+const EDITOR_OWNED = new Set(['Ctrl+B', 'Ctrl+I', 'Ctrl+K', 'Ctrl+E', 'Ctrl+F', 'Ctrl+0', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Ctrl+6', 'Ctrl+Shift+7', 'Ctrl+Shift+8', 'Ctrl+Shift+9', 'Ctrl+Shift+.', 'Ctrl+Shift+X', 'Ctrl+Shift+H', 'Ctrl+Alt+C', 'Ctrl+D', 'Ctrl+Enter', 'Tab', 'Shift+Tab']);
+
 export function installKeys(): () => void {
   let pendingChord: string | null = null;
   let chordTimer: ReturnType<typeof setTimeout> | undefined;
@@ -155,7 +209,9 @@ export function installKeys(): () => void {
     const chord = chordOf(e);
     const full = pendingChord ? `${pendingChord} ${chord}` : chord;
     const target = e.target as HTMLElement | null;
+    const inEditor = !!target?.closest?.('.cm-editor');
     const inField = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+    if (inEditor && !pendingChord && EDITOR_OWNED.has(chord)) return;
     // dialogs own their keys
     if (document.querySelector('.overlay') && e.key !== 'Escape' && !useUi.getState().palette) return;
     // Escape leaves reading mode

@@ -42,6 +42,8 @@ interface Layout {
   focusMode: boolean;
   /** The tool windows on the left stripe. */
   stripe: string[];
+  /** Split mode: the editor's share of the width (0.2–0.8). */
+  splitRatio: number;
 }
 
 export const DEFAULT_STRIPE = ['explorer', 'outline', 'search'];
@@ -69,7 +71,7 @@ interface UiState extends Layout {
   dismiss(id: number): void;
 }
 
-const LAYOUT_DEFAULT: Layout = { dockVisible: true, dockWidth: 280, dock: 'explorer', focusMode: false, stripe: DEFAULT_STRIPE };
+const LAYOUT_DEFAULT: Layout = { dockVisible: true, dockWidth: 280, dock: 'explorer', focusMode: false, stripe: DEFAULT_STRIPE, splitRatio: 0.5 };
 let toastId = 0;
 
 export const DOCK_MIN = 200;
@@ -78,7 +80,7 @@ export const DOCK_MAX = 560;
 export const useUi = create<UiState>((set, get) => {
   const persist = () => {
     const s = get();
-    save('layout', { dockVisible: s.dockVisible, dockWidth: s.dockWidth, dock: s.dock, focusMode: s.focusMode, stripe: s.stripe });
+    save('layout', { dockVisible: s.dockVisible, dockWidth: s.dockWidth, dock: s.dock, focusMode: s.focusMode, stripe: s.stripe, splitRatio: s.splitRatio });
   };
   return {
     ...load<Layout>('layout', LAYOUT_DEFAULT),

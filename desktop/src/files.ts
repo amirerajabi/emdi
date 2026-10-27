@@ -25,6 +25,43 @@ export function readText(file: string): { text: string; mtime: number } {
   return { text, mtime: st.mtimeMs };
 }
 
+/** Writes through a temporary file next to the target, so a crash never leaves half a document. */
+export function writeText(file: string, text: string): { mtime: number } {
+  writeAtomic(file, Buffer.from(text, 'utf8'));
+  return { mtime: fs.statSync(file).mtimeMs };
+}
+
+export function writeBytes(file: string, data: Uint8Array): void {
+  writeAtomic(file, Buffer.from(data));
+}
+
+function writeAtomic(file: string, data: Buffer): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.tmp`);
+  fs.writeFileSync(tmp, data);
+  try {
+    fs.renameSync(tmp, file);
+  } catch (e) {
+    fs.rmSync(tmp, { force: true });
+    throw e;
+  }
+}
+
+/** A new empty file or folder; fails when the name is taken. */
+export function create(p: string, isDir: boolean, text = ''): void {
+  if (fs.existsSync(p)) throw new Error(`${path.basename(p)} already exists`);
+  if (isDir) fs.mkdirSync(p, { recursive: true });
+  else {
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, text, { flag: 'wx' });
+  }
+}
+
+export function rename(from: string, to: string): void {
+  if (from.toLowerCase() !== to.toLowerCase() && fs.existsSync(to)) throw new Error(`${path.basename(to)} already exists`);
+  fs.renameSync(from, to);
+}
+
 /** Folders first, then files, by name; `all` lists every file, not only Markdown. */
 export function listDir(dir: string, all: boolean): FsEntry[] {
   const out: FsEntry[] = [];

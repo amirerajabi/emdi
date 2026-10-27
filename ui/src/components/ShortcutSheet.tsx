@@ -6,7 +6,7 @@ export function ShortcutSheet() {
   const open = useUi((s) => s.shortcutsOpen);
   if (!open) return null;
   const groups = new Map<string, typeof COMMANDS>();
-  for (const c of COMMANDS.filter((c) => c.keys?.length)) {
+  for (const c of COMMANDS.filter((c) => c.keys?.length || c.keyHint)) {
     if (!groups.has(c.category)) groups.set(c.category, []);
     groups.get(c.category)!.push(c);
   }
@@ -20,7 +20,7 @@ export function ShortcutSheet() {
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 26, borderBottom: '1px solid var(--border-subtle)' }}>
                 <span style={{ flex: 1 }}>{c.title}</span>
                 <span className="kbd-group">
-                  {keyLabel(c.keys![0])
+                  {(c.keys?.[0] ? keyLabel(c.keys[0]) : c.keyHint!)
                     .split(' ')
                     .map((k, i) => (
                       <kbd key={i}>{k}</kbd>
