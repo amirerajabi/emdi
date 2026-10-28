@@ -1,4 +1,4 @@
-// The reader: the active document rendered as a page. Links to other Markdown files open them in Emdi (with their
+// The reader: the active document rendered as a page. Links to other Markdown files open them in Folio (with their
 // #heading), web links open in the browser, local images are served by the desktop shell, code blocks get a copy button
 // and mermaid blocks become diagrams. The heading in view is reported for the outline and the "On this page" list.
 import { FileWarning, LoaderCircle } from 'lucide-react';

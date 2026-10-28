@@ -422,8 +422,8 @@
 .markdown-body .md-empty { color: var(--md-muted); font-style: italic; }
 
 /* find in document (FindBar) */
-::highlight(emdi-find) { background-color: var(--mark-bg); }
-::highlight(emdi-find-current) { background-color: #f59e0b; color: #111; }
+::highlight(folio-find) { background-color: var(--mark-bg); }
+::highlight(folio-find-current) { background-color: #f59e0b; color: #111; }
 
 /* ------------------------------------------------------------------ On this page */
 

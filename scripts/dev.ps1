@@ -16,7 +16,7 @@ try {
     Write-Host 'Open http://localhost:5173/'
     Wait-Process -Id $vite.Id
   } else {
-    $env:EMDI_DEV_URL = 'http://localhost:5173'
+    $env:FOLIO_DEV_URL = 'http://localhost:5173'
     Push-Location "$root/desktop"
     npm run build
     npx electron . @($Paths | ForEach-Object { Resolve-Path $_ })

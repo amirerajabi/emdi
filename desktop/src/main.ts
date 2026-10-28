@@ -1,36 +1,41 @@
-// Emdi desktop shell: one window, the UI on emdi://app (or the Vite dev server), files read by the main process.
+// Folio desktop shell: one window, the UI on folio://app (or the Vite dev server), files read by the main process.
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, Notification, protocol, screen, shell } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { create, FileWatcher, listDir, listMarkdownFiles, readText, rename, writeBytes, writeText } from './files';
+import { copyOldProfile, OLD_SCHEME, readOldStorage } from './migrate';
 import { createUpdater } from './updater';
 import type { UpdateController } from './updater-core';
 
-const DEV_URL = process.env.EMDI_DEV_URL;
+const DEV_URL = process.env.FOLIO_DEV_URL;
 const repoRoot = path.resolve(__dirname, '..', '..');
 const uiDir = app.isPackaged ? path.join(process.resourcesPath, 'ui') : path.join(repoRoot, 'ui', 'dist');
 const stateFile = () => path.join(app.getPath('userData'), 'window-state.json');
 /** The app icon for the window and the taskbar: resources/icon.png when installed, build/icon.png in dev. */
 const iconFile = app.isPackaged ? path.join(process.resourcesPath, 'icon.png') : path.join(__dirname, '..', 'build', 'icon.png');
-const smokeTest = !!process.env.EMDI_SMOKE_SHOT;
+const smokeTest = !!process.env.FOLIO_SMOKE_SHOT;
 
 // Windows groups taskbar buttons (and picks their icon) by AppUserModelId: the installer's shortcut uses the appId,
-// so the running window must too, or the taskbar shows the default Electron icon.
+// so the running window must too, or the taskbar shows the default Electron icon. (Still Emdi's: see electron-builder.yml.)
 if (process.platform === 'win32') app.setAppUserModelId('dev.emdi.app');
 
 // one window and no navigation: Chromium's spare renderer process (kept warm for the next site) is only memory
 app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess');
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'emdi', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, codeCache: true } },
-  // local images and media referenced by a document: emdi-file:///C:/docs/img.png
-  { scheme: 'emdi-file', privileges: { secure: true, supportFetchAPI: true, stream: true } },
+  { scheme: 'folio', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, codeCache: true } },
+  // local images and media referenced by a document: folio-file:///C:/docs/img.png
+  { scheme: 'folio-file', privileges: { secure: true, supportFetchAPI: true, stream: true } },
+  // Emdi's origin, only to hand its storage over once (migrate.ts)
+  { scheme: OLD_SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
 ]);
 
-// a smoke test runs beside an installed Emdi: its own profile, no single-instance hand-off
-if (smokeTest) app.setPath('userData', path.join(app.getPath('temp'), `emdi-smoke-${process.pid}`));
+// a smoke test runs beside an installed Folio: its own profile, no single-instance hand-off
+if (smokeTest) app.setPath('userData', path.join(app.getPath('temp'), `folio-smoke-${process.pid}`));
 else if (!app.requestSingleInstanceLock()) app.quit();
+// a smoke test can try the hand-over into its own profile (FOLIO_SMOKE_MIGRATE=1)
+const fromEmdi = (!smokeTest || process.env.FOLIO_SMOKE_MIGRATE === '1') && copyOldProfile();
 
 let win: BrowserWindow | null = null;
 let updater: UpdateController | null = null;
@@ -67,8 +72,8 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https: http: emdi-file:",
-  "media-src 'self' https: emdi-file:",
+  "img-src 'self' data: blob: https: http: folio-file:",
+  "media-src 'self' https: folio-file:",
   "font-src 'self' data:",
   "worker-src 'self' blob:",
   "connect-src 'self'",
@@ -112,7 +117,7 @@ function createWindow(): void {
     minWidth: 640,
     minHeight: 420,
     show: false,
-    title: 'Emdi',
+    title: 'Folio',
     backgroundColor: dark ? '#1b1d21' : '#f5f6f8',
     ...(fs.existsSync(iconFile) ? { icon: iconFile } : {}),
     autoHideMenuBar: true,
@@ -123,7 +128,7 @@ function createWindow(): void {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: true,
-      additionalArguments: [`--emdi-version=${app.getVersion()}`],
+      additionalArguments: [`--folio-version=${app.getVersion()}`],
     },
   });
   if (state.maximized) win.maximize();
@@ -173,9 +178,9 @@ function createWindow(): void {
     if (choice === 0) e.preventDefault();
   });
 
-  // the window only ever shows Emdi; links open in the browser
+  // the window only ever shows Folio; links open in the browser
   win.webContents.on('will-navigate', (e, url) => {
-    if (!url.startsWith('emdi://app') && !(DEV_URL && url.startsWith(DEV_URL))) {
+    if (!url.startsWith('folio://app') && !(DEV_URL && url.startsWith(DEV_URL))) {
       e.preventDefault();
       if (/^(https?|mailto):/.test(url)) void shell.openExternal(url);
     }
@@ -206,10 +211,10 @@ function createWindow(): void {
   if (DEV_URL) win.webContents.on('before-input-event', (_e, input) => input.key === 'F12' && input.control && input.shift && win?.webContents.toggleDevTools());
   win.webContents.on('did-start-loading', () => (rendererReady = false));
 
-  void win.loadURL(DEV_URL ?? 'emdi://app/index.html');
+  void win.loadURL(DEV_URL ?? 'folio://app/index.html');
 
-  // smoke test: EMDI_SMOKE_SHOT=out.png captures the window once the UI has settled, then quits
-  const shot = process.env.EMDI_SMOKE_SHOT;
+  // smoke test: FOLIO_SMOKE_SHOT=out.png captures the window once the UI has settled, then quits
+  const shot = process.env.FOLIO_SMOKE_SHOT;
   if (shot) {
     win.webContents.on('console-message', (e) => console.log(`[renderer] ${e.level}: ${e.message}`));
     win.webContents.once('did-finish-load', () =>
@@ -217,7 +222,7 @@ function createWindow(): void {
         const img = await win!.webContents.capturePage();
         fs.writeFileSync(shot, img.toPNG());
         app.quit();
-      }, Number(process.env.EMDI_SMOKE_DELAY ?? 4000)),
+      }, Number(process.env.FOLIO_SMOKE_DELAY ?? 4000)),
     );
   }
 }
@@ -301,7 +306,7 @@ ipcMain.handle('update:configure', async (_e, opts?: { autoCheck?: boolean }) =>
 ipcMain.handle('update:install', async () => (await updaterReady).quitAndInstall());
 ipcMain.handle('update:cancel', async () => (await updaterReady).stopDownload());
 ipcMain.handle('notify', (_e, n: { title?: string; body?: string }) => {
-  if (win && !win.isFocused() && Notification.isSupported()) new Notification({ title: String(n?.title ?? 'Emdi'), body: String(n?.body ?? ''), icon: iconFile }).show();
+  if (win && !win.isFocused() && Notification.isSupported()) new Notification({ title: String(n?.title ?? 'Folio'), body: String(n?.body ?? ''), icon: iconFile }).show();
 });
 
 app.on('second-instance', (_e, argv) => {
@@ -315,9 +320,9 @@ app.on('second-instance', (_e, argv) => {
 /** Images, video and other media a document may embed; anything else is not served. */
 const MEDIA = /\.(png|jpe?g|gif|svg|webp|avif|bmp|ico|mp4|webm|ogg|mp3|wav)$/i;
 
-app.whenReady().then(() => {
-  // emdi://app/<path> serves the built UI
-  protocol.handle('emdi', async (req) => {
+app.whenReady().then(async () => {
+  // folio://app/<path> serves the built UI (and emdi://app the same files, for the hand-over from Emdi)
+  const serveUi = async (req: Request) => {
     const url = new URL(req.url);
     const rel = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
     const file = path.normalize(path.join(uiDir, rel));
@@ -327,9 +332,11 @@ app.whenReady().then(() => {
     const headers = new Headers(res.headers);
     headers.set('Content-Security-Policy', CSP);
     return new Response(res.body, { status: res.status, headers });
-  });
-  // emdi-file:///C:/dir/img.png → the local image next to the document
-  protocol.handle('emdi-file', (req) => {
+  };
+  protocol.handle('folio', serveUi);
+  protocol.handle(OLD_SCHEME, serveUi);
+  // folio-file:///C:/dir/img.png → the local image next to the document
+  protocol.handle('folio-file', (req) => {
     const url = new URL(req.url);
     let p = decodeURIComponent(url.pathname);
     if (process.platform === 'win32') p = p.replace(/^\/+/, '');
@@ -338,14 +345,21 @@ app.whenReady().then(() => {
   });
 
   if (!DEV_URL && !fs.existsSync(path.join(uiDir, 'index.html'))) {
-    dialog.showErrorBox('Emdi', `The UI is not built (${uiDir}). Run "npm run build" in the ui folder.`);
+    dialog.showErrorBox('Folio', `The UI is not built (${uiDir}). Run "npm run build" in the ui folder.`);
     app.quit();
     return;
   }
+  if (fromEmdi) {
+    handingOver = true;
+    await readOldStorage(path.join(__dirname, 'preload.js'));
+  }
   createWindow();
+  handingOver = false;
 });
 
-app.on('window-all-closed', () => app.quit());
+// the hidden hand-over window closing is not the last window closing
+let handingOver = false;
+app.on('window-all-closed', () => !handingOver && app.quit());
 app.on('before-quit', () => {
   updater?.dispose();
   watcher.dispose();

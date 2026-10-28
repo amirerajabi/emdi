@@ -67,10 +67,10 @@ export function resolvePath(dir: string, rel: string): string {
   return parts.join(sep);
 }
 
-/** The emdi-file:// URL that serves a local image to the window (desktop/src/main.ts). */
+/** The folio-file:// URL that serves a local image to the window (desktop/src/main.ts). */
 export function fileUrl(path: string): string {
   const p = path.replace(/\\/g, '/');
-  return `emdi-file://${p.startsWith('/') ? '' : '/'}${p.split('/').map(encodeURIComponent).join('/').replace(/^\/([A-Za-z])%3A/, '/$1:')}`;
+  return `folio-file://${p.startsWith('/') ? '' : '/'}${p.split('/').map(encodeURIComponent).join('/').replace(/^\/([A-Za-z])%3A/, '/$1:')}`;
 }
 
 /** The path of `to` as seen from the folder `from` (../ where needed); `to` itself when they share no root. */

@@ -1,15 +1,19 @@
-# Emdi
+# Folio
 
 A beautiful Markdown viewer and editor: open a `.md` file or a folder of them and read them the way they were meant to
 look, with GitHub-flavoured Markdown, highlighted code, math, diagrams, an outline and live reload, in light and dark
 themes. Write with a formatting toolbar, a `/` menu for every block and a live preview beside the text.
 
-Emdi follows the architecture and UI structure of [Kod](https://github.com/amirerajabi/kod) (and Rowlit): an
+Folio was called Emdi until 0.3.0. An Emdi install updates itself to Folio and keeps its settings, recent files and open
+tabs (`desktop/src/migrate.ts`); the app ID stays `dev.emdi.app` so the update replaces Emdi instead of installing
+beside it.
+
+Folio follows the architecture and UI structure of [Kod](https://github.com/amirerajabi/kod) (and Rowlit): an
 **Electron** shell and a **React** UI, with the same top bar, tool window stripe, side panel, tabs, status bar, Search
 Everywhere, Settings, themes and self-updater.
 
 ```
-desktop/   Electron shell: window (Windows caption overlay, macOS inset), emdi://app protocol, emdi-file:// for local
+desktop/   Electron shell: window (Windows caption overlay, macOS inset), folio://app protocol, folio-file:// for local
            images, file reading / listing / watching, .md file association, PDF export, the updater
 ui/        React UI: top bar, tool window stripe, side panel (Explorer, Outline, Find in Files), document tabs,
            the reader, status bar, palette, settings, dialogs
@@ -28,7 +32,7 @@ docs/      release notes
 - Code blocks highlighted in the chosen code theme, with the language and a copy button.
 - Math with KaTeX (`$inline$`, `$$display$$`) and Mermaid diagrams (```` ```mermaid ````), drawn in the current theme.
 - Right-to-left text (Persian, Arabic, Hebrew) reads right-to-left, block by block (`dir="auto"`).
-- Links to other Markdown files open in Emdi at the linked `#heading`; local images are shown; web links open in the
+- Links to other Markdown files open in Folio at the linked `#heading`; local images are shown; web links open in the
   browser; other files open in their default app.
 - Documents reload when their file changes on disk.
 
@@ -46,7 +50,7 @@ docs/      release notes
 - Paste a URL over selected text to make a link; paste or drop an image to save it next to the document (in
   `images/`) and link it.
 - Find and Replace, undo history per document, right-to-left lines, spell checking with suggestions on right-click.
-- New documents (Ctrl+N), Save / Save As, Auto Save (a moment after typing, or when Emdi loses focus), unsaved markers,
+- New documents (Ctrl+N), Save / Save As, Auto Save (a moment after typing, or when Folio loses focus), unsaved markers,
   and a question before closing anything unsaved. New file, new folder, rename and delete in the Explorer.
 
 **Finding your way**
@@ -88,7 +92,7 @@ cd ui; npm install; npm run build; cd ..
 cd desktop; npm install; npm start
 ```
 
-`EMDI_DEV_URL` loads the UI from a dev server. `EMDI_SMOKE_SHOT=out.png` captures the window once the UI has settled
+`FOLIO_DEV_URL` loads the UI from a dev server. `FOLIO_SMOKE_SHOT=out.png` captures the window once the UI has settled
 and quits (with the renderer's console on stdout).
 
 ## Package

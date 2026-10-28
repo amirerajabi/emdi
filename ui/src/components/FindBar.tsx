@@ -48,11 +48,11 @@ export function FindBar() {
       input.current?.focus();
       input.current?.select();
     };
-    window.addEventListener('emdi:find', refocus);
+    window.addEventListener('folio:find', refocus);
     return () => {
-      window.removeEventListener('emdi:find', refocus);
-      highlights?.delete('emdi-find');
-      highlights?.delete('emdi-find-current');
+      window.removeEventListener('folio:find', refocus);
+      highlights?.delete('folio-find');
+      highlights?.delete('folio-find-current');
     };
   }, []);
 
@@ -68,15 +68,15 @@ export function FindBar() {
 
   useEffect(() => {
     if (!highlights || !HighlightCtor) return;
-    highlights.set('emdi-find', new HighlightCtor(...ranges));
+    highlights.set('folio-find', new HighlightCtor(...ranges));
     const cur = ranges[index];
     if (cur) {
-      highlights.set('emdi-find-current', new HighlightCtor(cur));
+      highlights.set('folio-find-current', new HighlightCtor(cur));
       const scroller = readerScroll();
       const rect = cur.getBoundingClientRect();
       const box = scroller?.getBoundingClientRect();
       if (scroller && box && (rect.top < box.top + 60 || rect.bottom > box.bottom - 20)) scroller.scrollBy({ top: rect.top - box.top - box.height / 3 });
-    } else highlights.delete('emdi-find-current');
+    } else highlights.delete('folio-find-current');
   }, [ranges, index]);
 
   const move = (d: number) => ranges.length && setIndex((i) => (i + d + ranges.length) % ranges.length);

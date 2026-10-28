@@ -1,4 +1,4 @@
-/* Emdi app styles: the Rowlit frame (glass top bar, tabbed dock, tab strip, status bar), as in Kod.
+/* Folio app styles: the Rowlit frame (glass top bar, tabbed dock, tab strip, status bar), as in Kod.
    Colours, font sizes and weights only via tokens.css. */
 *,
 *::before,
@@ -2369,7 +2369,7 @@ button.sb-item:hover {
   font-weight: var(--weight-strong);
 }
 
-/* ------------------------------------------------------------------ Emdi: outline, find in files, reading mode */
+/* ------------------------------------------------------------------ Folio: outline, find in files, reading mode */
 
 .outline-filter {
   display: flex;

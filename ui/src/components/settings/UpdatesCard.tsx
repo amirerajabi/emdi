@@ -5,7 +5,7 @@ import { canStopUpdateDownload, checkForUpdatesNow, describeUpdate, openReleaseP
 import { platform } from '../../platform';
 import { useSettings } from '../../store/settings';
 import { useUpdates } from '../../store/updates';
-import { EmdiMark } from '../common/icons';
+import { FolioMark } from '../common/icons';
 import { Card, SearchBlock, ToggleRow } from './controls';
 
 export function UpdatesCard() {
@@ -23,14 +23,14 @@ export function UpdatesCard() {
 
   return (
     <>
-      <Card title="Emdi" description={desktop ? 'Updates are downloaded in the background from GitHub Releases and installed when you restart.' : 'New versions are published on GitHub Releases.'}>
+      <Card title="Folio" description={desktop ? 'Updates are downloaded in the background from GitHub Releases and installed when you restart.' : 'New versions are published on GitHub Releases.'}>
         <SearchBlock keywords="updates version check for updates new release notes download restart install about kod">
           <div className="upd-hero">
             <span className="upd-logo" aria-hidden="true">
-              <EmdiMark size={28} />
+              <FolioMark size={28} />
             </span>
             <div className="upd-info">
-              <div className="upd-version">{desktop ? <>Version <span className="tabular">{version}</span></> : 'Emdi in the browser'}</div>
+              <div className="upd-version">{desktop ? <>Version <span className="tabular">{version}</span></> : 'Folio in the browser'}</div>
               {desktop ? (
                 <div className={`upd-status tone-${d.tone}`} role="status" aria-live="polite">
                   <Icon size={14} className={busy ? 'spin' : undefined} aria-hidden="true" />

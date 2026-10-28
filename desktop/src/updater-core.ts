@@ -25,7 +25,7 @@ export interface UpdateStatus {
 
 /** GitHub repository the releases (and latest.yml) are published to (electron-builder.yml publish). */
 export const RELEASE_OWNER = 'amirerajabi';
-export const RELEASE_REPO = 'emdi';
+export const RELEASE_REPO = 'folio';
 export const RELEASES_URL = `https://github.com/${RELEASE_OWNER}/${RELEASE_REPO}/releases`;
 
 /** First automatic check after start, then every 6 hours. */

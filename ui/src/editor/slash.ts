@@ -58,14 +58,14 @@ export const slashMenu = () =>
     icons: false,
     maxRenderedOptions: 80,
     closeOnBlur: true,
-    tooltipClass: () => 'emdi-slash',
+    tooltipClass: () => 'folio-slash',
     addToOptions: [
       {
         position: 20,
         render: (c) => {
           const item = SLASH_ITEMS.find((i) => i.id === c.type);
           const el = document.createElement('span');
-          el.className = 'emdi-slash-icon';
+          el.className = 'folio-slash-icon';
           if (item) el.innerHTML = iconOf(item);
           return el;
         },

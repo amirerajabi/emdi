@@ -7,7 +7,7 @@ import { useSettings } from '../store/settings';
 import { toast } from '../store/ui';
 import { useUpdates } from '../store/updates';
 
-export const REPO_URL = 'https://github.com/amirerajabi/emdi';
+export const REPO_URL = 'https://github.com/amirerajabi/folio';
 export const RELEASES_URL = `${REPO_URL}/releases`;
 
 const announced = new Set<string>();
@@ -23,12 +23,12 @@ function announceUpdate(prev: UpdateStatus | null, next: UpdateStatus): void {
   };
   const notify = (title: string, body: string) => platform.showNotification?.({ title, body });
   if (next.mode === 'install' && (next.state === 'available' || next.state === 'downloading') && once('arrived')) {
-    toast('info', `Emdi ${v} is available`, 'Downloading in the background — progress is in the status bar.');
+    toast('info', `Folio ${v} is available`, 'Downloading in the background — progress is in the status bar.');
   } else if (next.mode === 'install' && next.state === 'ready' && once('ready')) {
     announced.add(`arrived:${v}`);
-    notify(`Emdi ${v} is ready`, 'Restart Emdi to finish updating, or it installs when you quit.');
+    notify(`Folio ${v} is ready`, 'Restart Folio to finish updating, or it installs when you quit.');
   } else if (next.mode === 'notify' && next.state === 'available' && once('ready')) {
-    notify(`Emdi ${v} is available`, 'Download the new version from GitHub.');
+    notify(`Folio ${v} is available`, 'Download the new version from GitHub.');
   }
 }
 
@@ -55,12 +55,12 @@ export function installUpdateWiring(): void {
 function report(s: UpdateStatus): void {
   switch (s.state) {
     case 'up-to-date':
-      toast('success', "You're up to date", `Emdi ${s.currentVersion} is the latest version.`);
+      toast('success', "You're up to date", `Folio ${s.currentVersion} is the latest version.`);
       break;
     case 'downloading':
       if (s.version && announced.has(`arrived:${s.version}`)) break;
       if (s.version) announced.add(`arrived:${s.version}`);
-      toast('info', s.version ? `Downloading Emdi ${s.version}…` : 'Downloading the update…', "You'll be asked to restart when it is ready.");
+      toast('info', s.version ? `Downloading Folio ${s.version}…` : 'Downloading the update…', "You'll be asked to restart when it is ready.");
       break;
     case 'disabled':
       toast('info', 'Updates are not checked in this build', s.message);
@@ -95,7 +95,7 @@ export async function checkForUpdatesNow(): Promise<void> {
 
 export async function restartToUpdate(): Promise<void> {
   const ok = await platform.quitAndInstall?.().catch(() => false);
-  if (!ok) toast('warning', 'The update could not be installed now', 'It will be installed when Emdi quits.');
+  if (!ok) toast('warning', 'The update could not be installed now', 'It will be installed when Folio quits.');
 }
 
 export const canStopUpdateDownload = () => typeof platform.cancelUpdateDownload === 'function';
@@ -131,18 +131,18 @@ export function describeUpdate(s: UpdateStatus | null): UpdateDescription {
     case 'checking':
       return { tone: 'busy', text: 'Checking for updates…', chip: 'Checking for updates…' };
     case 'up-to-date':
-      return { tone: 'success', text: `You're up to date — Emdi ${s.currentVersion} is the latest version.`, chip: null };
+      return { tone: 'success', text: `You're up to date — Folio ${s.currentVersion} is the latest version.`, chip: null };
     case 'available':
-      if (s.downloadStopped) return { tone: 'accent', text: `Download stopped — Emdi ${v} is available.`, chip: 'Download stopped', stopped: true };
+      if (s.downloadStopped) return { tone: 'accent', text: `Download stopped — Folio ${v} is available.`, chip: 'Download stopped', stopped: true };
       return s.mode === 'notify'
-        ? { tone: 'accent', text: `Emdi ${v} is available to download.`, chip: `v${v} available` }
-        : { tone: 'accent', text: `Emdi ${v} is available — downloading in the background…`, chip: `v${v} available` };
+        ? { tone: 'accent', text: `Folio ${v} is available to download.`, chip: `v${v} available` }
+        : { tone: 'accent', text: `Folio ${v} is available — downloading in the background…`, chip: `v${v} available` };
     case 'downloading': {
       const percent = Math.max(0, Math.min(100, Math.round(s.percent ?? 0)));
-      return { tone: 'busy', text: `Downloading Emdi ${v ?? 'update'}… ${percent}%`, chip: `Downloading ${percent}%`, percent };
+      return { tone: 'busy', text: `Downloading Folio ${v ?? 'update'}… ${percent}%`, chip: `Downloading ${percent}%`, percent };
     }
     case 'ready':
-      return { tone: 'accent', text: `Emdi ${v} is ready — restart to finish updating (or it installs when you quit).`, chip: 'Restart to update' };
+      return { tone: 'accent', text: `Folio ${v} is ready — restart to finish updating (or it installs when you quit).`, chip: 'Restart to update' };
     case 'error':
       return { tone: 'warning', text: `Couldn't check for updates${s.message ? `: ${s.message}` : '.'}`, chip: 'Update check failed' };
     case 'disabled':

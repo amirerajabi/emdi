@@ -23,7 +23,7 @@ export function UpdateChip() {
       className={`sb-item sb-update tone-${d.tone}${ready ? ' ready' : ''}`}
       onClick={() => (ready ? void restartToUpdate() : openSettings('updates'))}
       title={ready ? `${d.text} Click to restart now.` : `${d.text} Click for update settings.`}
-      aria-label={error ? 'Update check failed — update settings' : ready ? `Restart to update to Emdi ${status.version}` : d.chip}
+      aria-label={error ? 'Update check failed — update settings' : ready ? `Restart to update to Folio ${status.version}` : d.chip}
     >
       <Icon size={12} className={status.state === 'checking' ? 'spin' : undefined} aria-hidden="true" />
       {!error && <span className="sb-update-label">{d.chip}</span>}
@@ -45,7 +45,7 @@ export function UpdateChip() {
   );
 }
 
-/** Persistent card in the toast stack: "Emdi X.Y.Z is ready — Restart now / Later" (or "available — Download"). */
+/** Persistent card in the toast stack: "Folio X.Y.Z is ready — Restart now / Later" (or "available — Download"). */
 export function UpdateNotice() {
   const status = useUpdates((s) => s.status);
   const dismissed = useUpdates((s) => s.dismissed);
@@ -58,7 +58,7 @@ export function UpdateNotice() {
       {ready ? <RefreshCw size={16} className="sev-info" /> : <Download size={16} className="sev-info" />}
       <div className="toast-body">
         <div>
-          Emdi {notice.version} is {ready ? 'ready' : 'available'}
+          Folio {notice.version} is {ready ? 'ready' : 'available'}
         </div>
         <div className="toast-detail">{ready ? 'Restart to finish updating, or it installs when you quit.' : 'Download the new version from GitHub.'}</div>
         <div className="update-notice-actions">

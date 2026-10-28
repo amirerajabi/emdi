@@ -26,7 +26,7 @@ export async function renderMermaid(root: HTMLElement): Promise<void> {
     // the source is the hidden <pre> (an attribute would lose "-->" to the sanitiser)
     const source = el.querySelector('.md-mermaid-src')?.textContent ?? '';
     try {
-      const { svg } = await mermaid.render(`emdi-mermaid-${++seq}`, source);
+      const { svg } = await mermaid.render(`folio-mermaid-${++seq}`, source);
       const out = document.createElement('div');
       out.className = 'md-mermaid-svg';
       out.innerHTML = svg;

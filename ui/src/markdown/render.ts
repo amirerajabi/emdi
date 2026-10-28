@@ -106,7 +106,7 @@ function instance(o: RenderOptions) {
   }
 
   // heading ids, source lines and every block's direction
-  md.core.ruler.push('emdi_blocks', (state) => {
+  md.core.ruler.push('folio_blocks', (state) => {
     const used = new Map<string, number>();
     const headings: Heading[] = [];
     const tokens = state.tokens;

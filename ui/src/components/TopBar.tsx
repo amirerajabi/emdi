@@ -8,7 +8,7 @@ import { activeDoc, useDocuments } from '../store/documents';
 import { effectiveTheme, useSettings } from '../store/settings';
 import { useUi } from '../store/ui';
 import { useWorkspace } from '../store/workspace';
-import { EmdiMark } from './common/icons';
+import { FolioMark } from './common/icons';
 import { showMenuBelow, type MenuItem } from './common/Menu';
 
 const tip = (title: string, id: string) => {
@@ -37,9 +37,9 @@ export function TopBar() {
 
   return (
     <header className="topbar" aria-label="Application">
-      <div className="brand" aria-label="Emdi">
-        <EmdiMark size={18} />
-        <span className="brand-name">Emdi</span>
+      <div className="brand" aria-label="Folio">
+        <FolioMark size={18} />
+        <span className="brand-name">Folio</span>
       </div>
       <button className="icon-btn" title="Main menu" aria-label="Main menu" onClick={(e) => showMenuBelow(e.currentTarget, appMenu())}>
         <MenuIcon size={16} />

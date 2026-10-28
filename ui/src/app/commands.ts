@@ -103,8 +103,8 @@ export const COMMANDS: Command[] = [
   { id: 'nav.commands', title: 'Find Action…', category: 'Navigate', keys: ['Ctrl+Shift+A', 'Ctrl+Shift+P', 'F1'], run: () => useUi.getState().openPalette('commands', '>'), global: true },
   { id: 'nav.headings', title: 'Go to Heading…', category: 'Navigate', keys: ['Ctrl+Shift+O', 'Ctrl+F12'], run: needsDoc(() => useUi.getState().openPalette('headings', '#')), global: true },
   { id: 'nav.recentFiles', title: 'Recent Files…', category: 'Navigate', keys: ['Ctrl+E'], run: () => useUi.getState().openPalette('recentFiles'), global: true },
-  { id: 'nav.find', title: 'Find in Document', category: 'Navigate', keys: ['Ctrl+F'], run: needsDoc(() => { const v = activeEditor(); if (v && activeDoc()?.mode === 'edit') { openSearchPanel(v); return; } useUi.getState().set({ findOpen: true }); window.dispatchEvent(new Event('emdi:find')); }), global: true },
-  { id: 'nav.findInFiles', title: 'Find in Files', category: 'Navigate', keys: ['Ctrl+Shift+F'], run: () => { useUi.getState().showDock('search'); setTimeout(() => window.dispatchEvent(new Event('emdi:find-in-files')), 0); }, global: true },
+  { id: 'nav.find', title: 'Find in Document', category: 'Navigate', keys: ['Ctrl+F'], run: needsDoc(() => { const v = activeEditor(); if (v && activeDoc()?.mode === 'edit') { openSearchPanel(v); return; } useUi.getState().set({ findOpen: true }); window.dispatchEvent(new Event('folio:find')); }), global: true },
+  { id: 'nav.findInFiles', title: 'Find in Files', category: 'Navigate', keys: ['Ctrl+Shift+F'], run: () => { useUi.getState().showDock('search'); setTimeout(() => window.dispatchEvent(new Event('folio:find-in-files')), 0); }, global: true },
   { id: 'nav.nextTab', title: 'Next Tab', category: 'Navigate', keys: ['Ctrl+Tab', 'Alt+Right'], run: () => switchTab(1), global: true },
   { id: 'nav.prevTab', title: 'Previous Tab', category: 'Navigate', keys: ['Ctrl+Shift+Tab', 'Alt+Left'], run: () => switchTab(-1), global: true },
   { id: 'nav.top', title: 'Go to Top', category: 'Navigate', keys: ['Ctrl+Home'], run: () => scrollReader('top') },
@@ -138,7 +138,7 @@ export const COMMANDS: Command[] = [
   // Help
   { id: 'view.shortcuts', title: 'Keyboard Shortcuts', category: 'Help', keys: ['Ctrl+K Ctrl+S'], run: () => useUi.getState().set({ shortcutsOpen: true }), global: true },
   { id: 'help.checkForUpdates', title: 'Check for Updates…', category: 'Help', run: () => void checkForUpdatesNow() },
-  { id: 'help.about', title: 'About Emdi', category: 'Help', run: () => openSettings('updates') },
+  { id: 'help.about', title: 'About Folio', category: 'Help', run: () => openSettings('updates') },
 ];
 
 export const commandById = (id: string) => COMMANDS.find((c) => c.id === id);

@@ -63,7 +63,7 @@ export async function boot(): Promise<void> {
     const root = useWorkspace.getState().root;
     const doc = useDocuments.getState().docs.find((d) => d.path === active);
     const name = doc ? `${doc.text !== doc.saved && !doc.loading ? '● ' : ''}${doc.title}` : null;
-    platform.setTitle([name, root ? basename(root) : null, 'Emdi'].filter(Boolean).join(' – '));
+    platform.setTitle([name, root ? basename(root) : null, 'Folio'].filter(Boolean).join(' – '));
   };
   useWorkspace.subscribe(title);
   useDocuments.subscribe(title);

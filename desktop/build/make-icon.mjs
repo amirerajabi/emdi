@@ -1,6 +1,6 @@
-// Generates the Emdi app icon without image libraries (the Rowlit approach): a navy rounded tile with an "M" in a
-// pink-to-violet gradient and an amber down arrow (Markdown's M↓), the same mark the UI draws
-// (ui/src/components/common/icons.tsx EmdiMark).
+// Generates the Folio app icon without image libraries (the Rowlit approach): a navy rounded tile with an "F" in a
+// pink-to-violet gradient whose bars read as lines of text, and an amber line under it, the same mark the UI draws
+// (ui/src/components/common/icons.tsx FolioMark).
 //
 //   build/icon.png   512x512 window / taskbar / Linux icon (also copied to resources/icon.png)
 //   build/icon.ico   16, 24, 32, 48, 64, 128, 256 (BMP entries for small sizes, PNG for 256)
@@ -19,19 +19,16 @@ const uiPublic = join(buildDir, '..', '..', 'ui', 'public');
 // kept in step with the --brand-* tokens in ui/src/theme/tokens.css
 const PALETTE = { tileTop: '#2a2f5e', tileBottom: '#0d1030', kStart: '#ff5fa2', kEnd: '#7c5cff', dot: '#ffc54d' };
 
-// The mark on a 64-unit grid (the SVG artwork): tile 2..62 r14, M and arrow strokes width 6.
+// The mark on a 64-unit grid (the SVG artwork): tile 2..62 r14; an F whose bars read as lines of text (strokes width 7)
+// and a short amber line under it (width 5), like the last line of a paragraph.
 const STROKES = [
-  [13, 46, 13, 18],
-  [13, 18, 24, 33],
-  [24, 33, 35, 18],
-  [35, 18, 35, 46],
+  [17, 47, 17, 17],
+  [17, 17, 47, 17],
+  [17, 30, 38, 30],
 ];
-const ARROW = [
-  [48, 18, 48, 45],
-  [42, 39, 48, 45],
-  [54, 39, 48, 45],
-];
-const STROKE_W = 6;
+const STROKE_W = 7;
+const ARROW = [[28, 43, 40, 43]];
+const ARROW_W = 5;
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
@@ -77,7 +74,7 @@ function sample(x, y, mac) {
   if (d <= STROKE_W / 2) over(out, mix(C.kStart, C.kEnd, Math.min(1, Math.max(0, ((u - 16) + (v - 16)) / 48))), 1);
   let da = Infinity;
   for (const [ax, ay, bx, by] of ARROW) da = Math.min(da, sdSegment(u, v, ax, ay, bx, by));
-  if (da <= STROKE_W / 2) over(out, C.dot, 1);
+  if (da <= ARROW_W / 2) over(out, C.dot, 1);
   return out;
 }
 
@@ -177,5 +174,5 @@ writeFileSync(join(buildDir, 'icon.icns'), icns(ICNS.map(([type, size]) => {
   if (!mac.has(size)) mac.set(size, png(size, render(size, true)));
   return { type, data: mac.get(size) };
 })));
-writeFileSync(join(uiPublic, 'favicon.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${PALETTE.tileTop}"/><stop offset="1" stop-color="${PALETTE.tileBottom}"/></linearGradient><linearGradient id="k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${PALETTE.kStart}"/><stop offset="1" stop-color="${PALETTE.kEnd}"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="14" fill="url(#t)"/><path d="${STROKES.map(([a, b, c, d]) => `M${a} ${b}L${c} ${d}`).join('')}" stroke="url(#k)" stroke-width="${STROKE_W}" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="${ARROW.map(([a, b, c, d]) => `M${a} ${b}L${c} ${d}`).join('')}" stroke="${PALETTE.dot}" stroke-width="${STROKE_W}" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>\n`);
+writeFileSync(join(uiPublic, 'favicon.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${PALETTE.tileTop}"/><stop offset="1" stop-color="${PALETTE.tileBottom}"/></linearGradient><linearGradient id="k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${PALETTE.kStart}"/><stop offset="1" stop-color="${PALETTE.kEnd}"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="14" fill="url(#t)"/><path d="${STROKES.map(([a, b, c, d]) => `M${a} ${b}L${c} ${d}`).join('')}" stroke="url(#k)" stroke-width="${STROKE_W}" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="${ARROW.map(([a, b, c, d]) => `M${a} ${b}L${c} ${d}`).join('')}" stroke="${PALETTE.dot}" stroke-width="${ARROW_W}" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>\n`);
 console.log('icon: wrote build/icon.png (512), build/icon.ico (16-256), build/icon.icns (16-1024), ui/public/favicon.svg');

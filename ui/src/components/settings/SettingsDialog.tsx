@@ -25,7 +25,7 @@ const SECTIONS: SectionDef[] = [
   { id: 'appearance', label: 'Appearance', icon: <Palette size={16} />, description: 'Color theme, code theme and the window font.', render: () => <AppearanceSection /> },
   { id: 'reader', label: 'Reader', icon: <BookOpenText size={16} />, description: 'Fonts, page width and how Markdown is read.', render: () => <ReaderSection /> },
   { id: 'editor', label: 'Editor', icon: <PenLine size={16} />, description: 'Writing Markdown: modes, saving, the toolbar and the / menu.', render: () => <EditorSection /> },
-  { id: 'updates', label: 'Updates', icon: <Download size={16} />, description: 'Your version of Emdi and new releases.', render: () => <UpdatesCard /> },
+  { id: 'updates', label: 'Updates', icon: <Download size={16} />, description: 'Your version of Folio and new releases.', render: () => <UpdatesCard /> },
 ];
 
 export function SettingsDialog() {
@@ -118,7 +118,7 @@ function Inner() {
               );
             })}
           </nav>
-          <div className="settings-side-foot">Emdi {platform.appVersion ?? ''}</div>
+          <div className="settings-side-foot">Folio {platform.appVersion ?? ''}</div>
         </aside>
 
         <main className="settings-main" role="tabpanel" aria-label={q ? 'Search results' : current.label}>

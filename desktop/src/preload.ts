@@ -1,4 +1,4 @@
-// The window.emdi bridge (ui/src/platform.ts). Only these calls cross into the main process.
+// The window.folio bridge (ui/src/platform.ts). Only these calls cross into the main process.
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
 
 const os = process.platform === 'darwin' ? 'darwin' : process.platform === 'win32' ? 'win32' : 'linux';
@@ -9,11 +9,14 @@ const listen = <T>(channel: string, cb: (v: T) => void) => {
   return () => ipcRenderer.removeListener(channel, h);
 };
 
-contextBridge.exposeInMainWorld('emdi', {
+contextBridge.exposeInMainWorld('folio', {
   kind: 'electron',
   os,
   titleBar: os === 'win32' ? 'overlay' : os === 'darwin' ? 'inset' : 'native',
-  appVersion: process.argv.find((a) => a.startsWith('--emdi-version='))?.slice('--emdi-version='.length) ?? '0.0.0',
+  appVersion: process.argv.find((a) => a.startsWith('--folio-version='))?.slice('--folio-version='.length) ?? '0.0.0',
+  // ---- the one-time hand-over from Emdi (desktop/src/migrate.ts)
+  importedStorage: (): Record<string, string> | null => ipcRenderer.sendSync('storage:imported'),
+  exportStorage: (entries: Record<string, string>) => ipcRenderer.send('storage:export', entries),
   // ---- files
   readFile: (path: string) => ipcRenderer.invoke('fs:read', String(path)),
   listDir: (dir: string, opts?: { all?: boolean }) => ipcRenderer.invoke('fs:list', String(dir), { all: opts?.all === true }),

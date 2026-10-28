@@ -1,4 +1,4 @@
-// The desktop bridge (desktop/src/preload.ts exposes window.emdi) or, in a plain browser (npm run dev), a fallback
+// The desktop bridge (desktop/src/preload.ts exposes window.folio) or, in a plain browser (npm run dev), a fallback
 // that opens files through the File System Access API where it can and asks for nothing else.
 
 export interface FsEntry {
@@ -19,6 +19,9 @@ export interface Platform {
   /** How the window draws its caption: Windows overlay buttons, macOS inset traffic lights, or a native frame. */
   titleBar: 'overlay' | 'inset' | 'native';
   appVersion?: string;
+  /** Desktop, once after updating from Emdi: its settings, recents and session (storage keys and values). */
+  importedStorage?(): Record<string, string> | null;
+  exportStorage?(entries: Record<string, string>): void;
   // ---- files
   readFile(path: string): Promise<{ text: string; mtime: number }>;
   listDir(dir: string, opts?: { all?: boolean }): Promise<FsEntry[]>;
@@ -77,7 +80,7 @@ export interface UpdateStatus {
 
 declare global {
   interface Window {
-    emdi?: Platform;
+    folio?: Platform;
   }
 }
 
@@ -169,6 +172,6 @@ function browserPlatform(): Platform {
   };
 }
 
-export const platform: Platform = window.emdi ?? browserPlatform();
+export const platform: Platform = window.folio ?? browserPlatform();
 
 export const isMac = platform.os === 'darwin';

@@ -1,4 +1,4 @@
-// The editor's CodeMirror configuration: Markdown (GitHub-flavoured) with highlighted code inside fences, Emdi's look
+// The editor's CodeMirror configuration: Markdown (GitHub-flavoured) with highlighted code inside fences, Folio's look
 // (theme tokens), the Markdown keys (EDITOR_ITEMS plus list continuation, Tab in tables and lists), the / menu, search,
 // pasting a link over a selection, pasted and dropped images, and right-to-left lines. Settings that change while the
 // editor is open are swapped in through compartments.

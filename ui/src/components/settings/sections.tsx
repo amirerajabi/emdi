@@ -14,7 +14,7 @@ export function GeneralSection() {
   return (
     <>
       <Card title="Startup">
-        <ToggleRow id="set-reopen" label="Reopen the last session" hint="When Emdi starts, open the folder and documents you had open" keywords="startup restore session recent tabs folder" checked={s.reopenLastSession} onChange={(v) => up({ reopenLastSession: v })} />
+        <ToggleRow id="set-reopen" label="Reopen the last session" hint="When Folio starts, open the folder and documents you had open" keywords="startup restore session recent tabs folder" checked={s.reopenLastSession} onChange={(v) => up({ reopenLastSession: v })} />
       </Card>
       <Card title="Files" description="Documents, tabs and the explorer.">
         <ToggleRow id="set-reload" label="Reload documents changed on disk" hint="Edit a file in another app and see the change here right away" keywords="auto reload live watch refresh change disk" checked={s.autoReload} onChange={(v) => up({ autoReload: v })} />
@@ -162,7 +162,7 @@ export function EditorSection() {
             value={s.autoSave}
             options={[
               ['afterDelay', 'A moment after typing stops'],
-              ['onFocusChange', 'When Emdi loses focus'],
+              ['onFocusChange', 'When Folio loses focus'],
               ['off', 'Off: save with Ctrl+S'],
             ]}
             onChange={(v) => up({ autoSave: v })}

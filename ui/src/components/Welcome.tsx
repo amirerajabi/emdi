@@ -4,7 +4,7 @@ import { openFile, openFolder, openRecent } from '../app/actions';
 import { keyLabel } from '../app/commands';
 import { basename, dirname } from '../lib/paths';
 import { useWorkspace } from '../store/workspace';
-import { EmdiMark, FileIcon } from './common/icons';
+import { FolioMark, FileIcon } from './common/icons';
 
 export function Welcome() {
   const recents = useWorkspace((s) => s.recents);
@@ -12,9 +12,9 @@ export function Welcome() {
     <div className="welcome">
       <div className="welcome-inner">
         <div className="welcome-brand">
-          <EmdiMark size={40} />
+          <FolioMark size={40} />
           <div>
-            <div className="welcome-brand-name">Emdi</div>
+            <div className="welcome-brand-name">Folio</div>
             <div className="welcome-brand-tagline">A beautiful Markdown viewer and editor</div>
           </div>
         </div>

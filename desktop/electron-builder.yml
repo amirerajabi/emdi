@@ -1,9 +1,11 @@
 # electron-builder config (the Rowlit layout).
-#   Windows: NSIS x64 installer -> desktop/dist/Emdi-Setup-<version>.exe (scripts/build.ps1)
+#   Windows: NSIS x64 installer -> desktop/dist/Folio-Setup-<version>.exe (scripts/build.ps1)
 # Input produced by the build script: ../ui/dist (the renderer).
+# The app ID is the one Emdi (Folio's first name) shipped with: Windows and macOS know an installed app by it, so an
+# update from Emdi replaces it in place instead of installing Folio beside it. Never change it.
 appId: dev.emdi.app
-productName: Emdi
-copyright: Copyright (c) 2026 Emdi contributors
+productName: Folio
+copyright: Copyright (c) 2026 Folio contributors
 
 directories:
   output: dist
@@ -24,7 +26,7 @@ asar: true
 publish:
   provider: github
   owner: amirerajabi
-  repo: emdi
+  repo: folio
   releaseType: release
 
 extraResources:
@@ -33,7 +35,7 @@ extraResources:
   - from: build/icon.png
     to: icon.png
 
-# Double-clicking a Markdown file opens it in Emdi (main.ts reads the path from argv / open-file).
+# Double-clicking a Markdown file opens it in Folio (main.ts reads the path from argv / open-file).
 fileAssociations:
   - ext: [md, markdown, mdown, mkd, mdx]
     name: Markdown document
@@ -54,7 +56,7 @@ win:
     - target: nsis
       arch: [x64]
   icon: build/icon.ico
-  artifactName: Emdi-Setup-${version}.${ext}
+  artifactName: Folio-Setup-${version}.${ext}
 
 nsis:
   oneClick: false
@@ -63,10 +65,10 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Emdi
+  shortcutName: Folio
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
-  uninstallDisplayName: Emdi ${version}
+  uninstallDisplayName: Folio ${version}
   deleteAppDataOnUninstall: false
   runAfterFinish: true
 
@@ -74,11 +76,11 @@ mac:
   target: [dmg, zip]
   icon: build/icon.icns
   category: public.app-category.productivity
-  artifactName: Emdi-${version}-mac-${arch}.${ext}
+  artifactName: Folio-${version}-mac-${arch}.${ext}
   darkModeSupport: true
 
 linux:
   target: [AppImage]
   icon: build/icon.png
   category: Office
-  artifactName: Emdi-${version}-linux-${arch}.${ext}
+  artifactName: Folio-${version}-linux-${arch}.${ext}

@@ -36,8 +36,8 @@ export function SearchPanel() {
   useEffect(() => {
     const focus = () => input.current?.focus();
     focus();
-    window.addEventListener('emdi:find-in-files', focus);
-    return () => window.removeEventListener('emdi:find-in-files', focus);
+    window.addEventListener('folio:find-in-files', focus);
+    return () => window.removeEventListener('folio:find-in-files', focus);
   }, []);
 
   useEffect(() => {

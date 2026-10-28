@@ -55,7 +55,7 @@ export interface Settings {
   /** How a Markdown file opens, and how a new document starts. */
   openMode: DocModeSetting;
   newMode: DocModeSetting;
-  /** afterDelay: a moment after typing stops; onFocusChange: when Emdi loses focus; also before a tab or the window closes. */
+  /** afterDelay: a moment after typing stops; onFocusChange: when Folio loses focus; also before a tab or the window closes. */
   autoSave: 'afterDelay' | 'onFocusChange' | 'off';
   autoSaveDelay: number;
   /** 'reader': the reading font; 'mono': the code font. */
